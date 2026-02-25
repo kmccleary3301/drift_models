@@ -22,7 +22,7 @@ jobs:
           python -m build
           twine check dist/*
       - name: Upload dist artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dist-artifacts
           path: dist/*

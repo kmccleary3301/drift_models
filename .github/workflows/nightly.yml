@@ -43,7 +43,7 @@ jobs:
           fi
       - name: Upload nightly runtime preflight artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: runtime-preflight-nightly-ubuntu-py3.12
           path: |
