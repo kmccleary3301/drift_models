@@ -3,8 +3,8 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/kmccleary3301/drift_models/ci.yml?branch=main&label=CI)](https://github.com/kmccleary3301/drift_models/actions/workflows/ci.yml)
 [![Nightly](https://img.shields.io/github/actions/workflow/status/kmccleary3301/drift_models/nightly.yml?label=Nightly)](https://github.com/kmccleary3301/drift_models/actions/workflows/nightly.yml)
 [![Runtime Health](https://img.shields.io/badge/runtime%20health-preflight%20enabled-2ea44f)](docs/runtime_health.md)
-[![PyPI](https://img.shields.io/pypi/v/drifting-models-repro)](https://pypi.org/project/drifting-models-repro/)
-[![Python](https://img.shields.io/pypi/pyversions/drifting-models-repro)](https://pypi.org/project/drifting-models-repro/)
+[![PyPI](https://img.shields.io/pypi/v/drift-models)](https://pypi.org/project/drift-models/)
+[![Python](https://img.shields.io/pypi/pyversions/drift-models)](https://pypi.org/project/drift-models/)
 [![License](https://img.shields.io/github/license/kmccleary3301/drift_models)](./LICENSE)
 
 Community reproduction of *Generative Modeling via Drifting* in PyTorch.

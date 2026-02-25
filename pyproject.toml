@@ -1,5 +1,5 @@
 [project]
-name = "drifting-models-repro"
+name = "drift-models"
 version = "0.1.0"
 description = "Community PyTorch reproduction of Generative Modeling via Drifting"
 readme = "README.md"

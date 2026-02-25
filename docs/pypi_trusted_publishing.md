@@ -9,7 +9,7 @@ This repository publishes with OpenID Connect (OIDC) via GitHub Actions:
 
 Configure both publishers in package index settings:
 
-- **Project**: `drifting-models-repro`
+- **Project**: `drift-models`
 - **Owner**: `kmccleary3301`
 - **Repository**: `drift_models`
 - **Workflow filename (PyPI)**: `release.yml`
@@ -23,7 +23,7 @@ Configure both publishers in package index settings:
 2. Run TestPyPI publish:
    - GitHub Actions → `Release (TestPyPI)` → `Run workflow`
 3. Validate install from TestPyPI:
-   - `pip install --index-url https://test.pypi.org/simple/ drifting-models-repro==<version>`
+   - `pip install --index-url https://test.pypi.org/simple/ drift-models==<version>`
 4. Tag production release:
    - `git tag v<version> && git push origin v<version>`
 5. Confirm `Release` workflow uploads artifacts + publishes to PyPI.

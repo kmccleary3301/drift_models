@@ -365,7 +365,7 @@ wheels = [
 ]
 
 [[package]]
-name = "drifting-models-repro"
+name = "drift-models"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
