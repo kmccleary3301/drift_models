@@ -14,7 +14,7 @@ Configure both publishers in package index settings:
 - **Repository**: `drift_models`
 - **Workflow filename (PyPI)**: `release.yml`
 - **Workflow filename (TestPyPI)**: `release-testpypi.yml`
-- **Environment (PyPI)**: _leave empty_ (or use `pypi` if you add it to workflow)
+- **Environment (PyPI)**: `pypi`
 - **Environment (TestPyPI)**: `testpypi`
 
 ## Release flow
