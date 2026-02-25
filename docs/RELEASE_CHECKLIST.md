@@ -30,12 +30,12 @@
 - [ ] Create release tag `vX.Y.Z`
 - [ ] Create GitHub Release notes
 - [ ] Publish to TestPyPI (recommended preflight):
-  - [ ] `uv run python -m build`
-  - [ ] `uv run twine check dist/*`
-  - [ ] `uv run twine upload --repository testpypi dist/*`
+  - [ ] Run `.github/workflows/release-testpypi.yml` (Trusted Publishing)
+  - [ ] Validate package install from TestPyPI
 - [ ] Publish to PyPI
   - [ ] GitHub Trusted Publishing is configured for this repository
   - [ ] `.github/workflows/release.yml` has `id-token: write` and no API token fallback path
+  - [ ] Trusted publisher settings match `docs/pypi_trusted_publishing.md`
 
 ## Post-release
 
