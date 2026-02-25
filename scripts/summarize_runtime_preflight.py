@@ -5,7 +5,7 @@ import glob
 import json
 from collections import Counter
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -155,7 +155,7 @@ def _build_summary(*, rows: list[PreflightRow]) -> dict[str, object]:
         for backend, counter in sorted(backend_failed_check_counter.items(), key=lambda item: item[0])
     }
     summary = {
-        "timestamp_utc": datetime.now(tz=UTC).isoformat(),
+        "timestamp_utc": datetime.now(tz=timezone.utc).isoformat(),
         "report_count": int(len(rows)),
         "pass_report_count": int(sum(1 for row in rows if row.status == "pass")),
         "fail_report_count": int(len(fail_reports)),
