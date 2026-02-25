@@ -8,6 +8,7 @@ Source checklist: `docs/RELEASE_CHECKLIST.md`
   - `.github/workflows/ci.yml`
   - `.github/workflows/nightly.yml`
   - `.github/workflows/release.yml`
+  - `.github/workflows/release-testpypi.yml`
   - `docs/ci_local_validation_20260225.md`
 - Packaging build/check
   - `uv run python -m build`

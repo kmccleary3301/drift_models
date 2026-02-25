@@ -77,6 +77,7 @@ Compatibility and support policy is documented in:
 - Release parity gate: `docs/release_gate_checklist.md`
 - Public release gate: `docs/RELEASE_CHECKLIST.md`
 - Branch protection policy: `docs/branch_protection.md`
+- PyPI/TestPyPI publish setup: `docs/pypi_trusted_publishing.md`
 
 ## Contributing and governance
 
