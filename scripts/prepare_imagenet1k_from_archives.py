@@ -4,7 +4,7 @@ import argparse
 import hashlib
 import json
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -222,7 +222,7 @@ def _write_archive_provenance(*, sources: dict[str, Path], provenance_path: Path
         )
 
     payload = {
-        "generated_at_utc": datetime.now(tz=UTC).isoformat(),
+        "generated_at_utc": datetime.now(tz=timezone.utc).isoformat(),
         "generator": "scripts/prepare_imagenet1k_from_archives.py",
         "archives": archives,
     }

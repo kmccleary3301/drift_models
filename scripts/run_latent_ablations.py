@@ -4,7 +4,7 @@ import argparse
 import json
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from drifting_models.utils import add_device_argument, codebase_fingerprint, environment_fingerprint, environment_snapshot, write_json
@@ -39,7 +39,7 @@ def main() -> None:
         )
         commands[f"train_{variant['name']}"] = {"argv": argv, "returncode": 0}
     summary = {
-        "generated_at_utc": datetime.now(tz=UTC).isoformat(),
+        "generated_at_utc": datetime.now(tz=timezone.utc).isoformat(),
         "device": args.device,
         "results": results,
     }

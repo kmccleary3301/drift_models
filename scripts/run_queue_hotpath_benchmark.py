@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from drifting_models.utils import add_device_argument, codebase_fingerprint, environment_fingerprint, environment_snapshot, write_json
@@ -53,7 +53,7 @@ def main() -> None:
         row["real_batch_manifest_fingerprint"] = payload.get("real_batch_manifest_fingerprint")
 
     summary = {
-        "generated_at_utc": datetime.now(tz=UTC).isoformat(),
+        "generated_at_utc": datetime.now(tz=timezone.utc).isoformat(),
         "kind": "queue_hotpath_benchmark",
         "device": args.device,
         "steps": int(args.steps),

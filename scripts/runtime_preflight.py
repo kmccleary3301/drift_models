@@ -6,7 +6,7 @@ import json
 import platform
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
@@ -204,7 +204,7 @@ def _build_summary(*, args: argparse.Namespace) -> dict[str, object]:
     fail_count = sum(1 for item in checks if item["status"] == "fail")
     skip_count = sum(1 for item in checks if item["status"] == "skip")
     summary = {
-        "timestamp_utc": datetime.now(tz=UTC).isoformat(),
+        "timestamp_utc": datetime.now(tz=timezone.utc).isoformat(),
         "python_version": sys.version,
         "platform": {
             "system": platform.system(),
