@@ -16,7 +16,7 @@ from drifting_models.drift_loss import (
 )
 
 try:
-    __version__ = package_version("drifting-models-repro")
+    __version__ = package_version("drift-models")
 except PackageNotFoundError:
     __version__ = "0.1.0"
 

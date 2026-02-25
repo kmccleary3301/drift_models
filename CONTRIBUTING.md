@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to `drifting-models-repro`.
+Thanks for contributing to `drift-models`.
 
 ## Scope and contribution standards
 
