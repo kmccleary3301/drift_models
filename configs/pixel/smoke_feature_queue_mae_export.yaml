@@ -1,0 +1,37 @@
+# Stage-7 pixel-space feature+queue smoke config with MAE encoder export loaded
+seed: 1337
+device: cpu
+steps: 2
+log-every: 1
+groups: 2
+negatives-per-group: 2
+positives-per-group: 2
+unconditional-per-group: 2
+num-classes: 1000
+image-size: 64
+channels: 3
+patch-size: 8
+hidden-dim: 128
+depth: 2
+num-heads: 4
+mlp-ratio: 4.0
+register-tokens: 8
+temperature: 0.05
+learning-rate: 0.0001
+use-feature-loss: true
+feature-encoder: mae
+mae-encoder-path: outputs/stage7_mae_encoder_for_pixel/mae_encoder.pt
+feature-base-channels: 8
+feature-stages: 2
+feature-temperatures: [0.02, 0.05, 0.2]
+feature-selected-stages: [0, 1]
+include-patch4-stats: false
+include-input-x2-mean: true
+disable-shared-location-normalization: false
+disable-feature-temperature-sqrt-scaling: false
+use-queue: true
+queue-prime-samples: 200
+queue-push-batch: 32
+queue-per-class-capacity: 64
+queue-global-capacity: 400
+queue-store-device: cpu

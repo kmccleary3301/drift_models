@@ -1,0 +1,39 @@
+# Width-parity MAE bootstrap config for Table-8 ablation-default latent template.
+# Purpose: produce a width-matched `w256` MAE export with full provenance on a
+# single-GPU host. This is not paper-scale MAE pretraining.
+
+seed: 1337
+device: auto
+steps: 4000
+log-every: 100
+
+batch-size: 8
+image-size: 32
+in-channels: 4
+num-classes: 1000
+
+base-channels: 256
+stages: 4
+encoder-arch: paper_resnet34_unet
+blocks-per-stage: 2
+norm-groups: 32
+
+mask-ratio: 0.5
+mask-patch-size: 2
+mask-schedule: fixed
+mask-warmup-steps: 0
+
+val-batch-size: 8
+learning-rate: 0.0002
+weight-decay: 0.01
+adam-beta1: 0.9
+adam-beta2: 0.95
+scheduler: warmup_cosine
+warmup-steps: 200
+use-ema: true
+ema-decay: 0.9995
+
+real-batch-source: tensor_shards
+real-loader-batch-size: 8
+real-num-workers: 0
+real-sanity-sample-batches: 2

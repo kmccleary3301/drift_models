@@ -1,0 +1,53 @@
+# Stage-5 SD-VAE latent protocol (CIFAR-10 upscaled -> SD-VAE latents) short run with MAE feature loss
+seed: 0
+device: cuda
+steps: 200
+log-every: 20
+output-dir: outputs/milestone80/latent_cifar_sdvae_short_mae_feature
+checkpoint-dir: outputs/milestone80/latent_cifar_sdvae_short_mae_feature/checkpoints
+keep-last-k-checkpoints: 5
+save-every: 50
+
+groups: 8
+negatives-per-group: 4
+positives-per-group: 4
+unconditional-per-group: 2
+alpha-fixed: 1.0
+
+num-classes: 10
+image-size: 32
+channels: 4
+patch-size: 2
+hidden-dim: 256
+depth: 6
+num-heads: 8
+mlp-ratio: 4.0
+register-tokens: 16
+temperature: 0.05
+learning-rate: 0.0001
+precision: bf16
+
+use-feature-loss: true
+feature-encoder: mae
+mae-encoder-path: outputs/milestone80/mae_cifar_sdvae_short/mae_encoder.pt
+feature-base-channels: 32
+feature-stages: 3
+feature-temperatures: [0.02, 0.05, 0.2]
+feature-selected-stages: [0, 1, 2]
+include-patch4-stats: true
+include-input-x2-mean: true
+
+use-queue: true
+queue-prime-samples: 1024
+queue-push-batch: 256
+queue-per-class-capacity: 256
+queue-global-capacity: 4096
+queue-store-device: cpu
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 1
+queue-refill-policy: per_step
+queue-refill-every: 1
+
+real-batch-source: tensor_file
+real-loader-batch-size: 512
+real-tensor-file-path: outputs/datasets/cifar10_val_sdvae_latents.pt

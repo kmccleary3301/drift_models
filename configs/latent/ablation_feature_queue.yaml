@@ -1,0 +1,42 @@
+# Stage-5 latent ablation config (feature-space + queue + CFG)
+seed: 1337
+device: cuda
+steps: 20
+log-every: 2
+groups: 4
+negatives-per-group: 4
+positives-per-group: 4
+unconditional-per-group: 2
+num-classes: 1000
+image-size: 32
+channels: 4
+patch-size: 4
+hidden-dim: 256
+depth: 4
+num-heads: 8
+mlp-ratio: 4.0
+register-tokens: 16
+temperature: 0.05
+learning-rate: 0.0001
+use-feature-loss: true
+feature-base-channels: 16
+feature-stages: 3
+feature-temperatures: [0.02, 0.05, 0.2]
+feature-selected-stages: [0, 1, 2]
+include-patch4-stats: true
+include-input-x2-mean: true
+disable-shared-location-normalization: false
+disable-feature-temperature-sqrt-scaling: false
+use-queue: true
+queue-prime-samples: 2048
+queue-push-batch: 256
+queue-per-class-capacity: 256
+queue-global-capacity: 4096
+queue-store-device: cpu
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 1
+queue-refill-policy: per_step
+queue-refill-every: 1
+real-batch-source: synthetic_dataset
+real-dataset-size: 50000
+real-loader-batch-size: 512

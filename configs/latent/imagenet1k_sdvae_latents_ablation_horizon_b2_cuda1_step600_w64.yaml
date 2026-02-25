@@ -1,0 +1,69 @@
+# ImageNet latent continuation config (step-600 target), pinned to cuda:1.
+# Matches the validated step-400 w64 profile, with extended horizon.
+
+steps: 600
+log-every: 10
+save-every: 50
+
+device: cuda:1
+seed: 1337
+precision: bf16
+
+num-classes: 1000
+image-size: 32
+channels: 4
+
+groups: 8
+negatives-per-group: 8
+positives-per-group: 8
+
+alpha-min: 1.0
+alpha-max: 4.0
+alpha-dist: powerlaw
+alpha-power: 3.0
+alpha-point: 1.0
+alpha-point-prob: 0.0
+
+patch-size: 2
+hidden-dim: 768
+depth: 12
+num-heads: 12
+mlp-ratio: 4.0
+register-tokens: 16
+norm-type: rmsnorm
+use-qk-norm: true
+use-rope: true
+
+temperature: 0.05
+drift-temperatures: [0.02, 0.05, 0.2]
+learning-rate: 2e-4
+scheduler: warmup_cosine
+warmup-steps: 1000
+
+use-ema: true
+ema-decay: 0.999
+
+use-feature-loss: true
+feature-encoder: mae
+mae-encoder-path: outputs/imagenet/mae_variant_a_w64/mae_encoder.pt
+mae-encoder-arch: resnet_unet
+feature-base-channels: 64
+feature-stages: 4
+feature-temperatures: [0.02, 0.05, 0.2]
+
+use-queue: true
+unconditional-per-group: 4
+queue-prime-samples: 20000
+queue-per-class-capacity: 128
+queue-global-capacity: 50000
+queue-store-device: cpu
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 1
+queue-strict-without-replacement: true
+queue-report-level: full
+
+real-batch-source: tensor_shards
+real-loader-batch-size: 2048
+real-num-workers: 0
+real-sanity-sample-batches: 0
+real-tensor-shards-manifest-path: outputs/datasets/imagenet1k_train_sdvae_latents_shards/manifest.json

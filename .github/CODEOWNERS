@@ -1,0 +1,11 @@
+# Default owners
+* @kmccleary
+
+# Parity-critical surfaces
+/drifting_models/drift_field.py @kmccleary
+/drifting_models/drift_loss.py @kmccleary
+/drifting_models/train/stage2.py @kmccleary
+/scripts/train_latent.py @kmccleary
+/scripts/train_pixel.py @kmccleary
+/docs/reproduction_report.md @kmccleary
+/docs/eval_contract.md @kmccleary

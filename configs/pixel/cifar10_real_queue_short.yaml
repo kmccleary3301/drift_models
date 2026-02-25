@@ -1,0 +1,42 @@
+# CIFAR-10 real-data pixel queue short run (pretrained-Inception eval ready)
+seed: 1337
+device: cuda
+steps: 500
+log-every: 50
+groups: 8
+negatives-per-group: 4
+positives-per-group: 4
+unconditional-per-group: 2
+alpha-min: 1.0
+alpha-max: 4.0
+num-classes: 10
+image-size: 32
+channels: 3
+patch-size: 4
+hidden-dim: 256
+depth: 6
+num-heads: 8
+mlp-ratio: 4.0
+register-tokens: 8
+temperature: 0.05
+learning-rate: 0.0001
+use-feature-loss: true
+feature-encoder: tiny
+feature-base-channels: 16
+feature-stages: 3
+feature-temperatures: [0.02, 0.05, 0.2]
+include-input-x2-mean: true
+use-queue: true
+queue-prime-samples: 2000
+queue-push-batch: 128
+queue-per-class-capacity: 256
+queue-global-capacity: 4000
+queue-store-device: cpu
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 20
+queue-refill-policy: per_step
+real-batch-source: imagefolder
+real-imagefolder-root: outputs/datasets/cifar10_train
+real-loader-batch-size: 256
+real-transform-normalize: true
+

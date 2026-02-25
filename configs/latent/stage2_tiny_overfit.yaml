@@ -1,0 +1,32 @@
+# Stage-2 tiny-set overfit sanity profile.
+seed: 1337
+device: cuda:1
+steps: 120
+log-every: 10
+
+groups: 2
+negatives-per-group: 2
+positives-per-group: 2
+
+num-classes: 1000
+image-size: 16
+channels: 4
+patch-size: 4
+hidden-dim: 128
+depth: 3
+num-heads: 8
+mlp-ratio: 4.0
+register-tokens: 8
+style-vocab-size: 1
+style-token-count: 0
+norm-type: rmsnorm
+use-qk-norm: true
+use-rope: true
+
+alpha-fixed: 1.0
+temperature: 0.1
+learning-rate: 0.0003
+precision: bf16
+scheduler: none
+
+overfit-fixed-batch: true

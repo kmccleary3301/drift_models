@@ -1,0 +1,17 @@
+# Stage-6 latent MAE pretrain smoke config
+seed: 1337
+device: cpu
+steps: 6
+log-every: 2
+batch-size: 8
+image-size: 32
+in-channels: 4
+num-classes: 1000
+base-channels: 8
+stages: 3
+mask-ratio: 0.6
+mask-patch-size: 2
+mask-schedule: fixed
+mask-warmup-steps: 0
+val-batch-size: 8
+learning-rate: 0.0001

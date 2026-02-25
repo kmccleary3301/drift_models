@@ -1,0 +1,44 @@
+# Stage-5 latent longrun config (checkpointable)
+seed: 1337
+device: cuda
+steps: 1000
+log-every: 20
+groups: 8
+negatives-per-group: 4
+positives-per-group: 4
+unconditional-per-group: 2
+num-classes: 1000
+image-size: 32
+channels: 4
+patch-size: 2
+hidden-dim: 384
+depth: 8
+num-heads: 12
+mlp-ratio: 4.0
+register-tokens: 16
+temperature: 0.05
+learning-rate: 0.0001
+use-feature-loss: true
+feature-base-channels: 32
+feature-stages: 3
+feature-temperatures: [0.02, 0.05, 0.2]
+feature-selected-stages: [0, 1, 2]
+include-patch4-stats: true
+include-input-x2-mean: true
+disable-shared-location-normalization: false
+disable-feature-temperature-sqrt-scaling: false
+use-queue: true
+queue-prime-samples: 8192
+queue-push-batch: 512
+queue-per-class-capacity: 512
+queue-global-capacity: 32768
+queue-store-device: cpu
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 2
+queue-strict-without-replacement: true
+queue-refill-policy: per_step
+queue-refill-every: 1
+real-batch-source: synthetic_dataset
+real-dataset-size: 200000
+real-loader-batch-size: 1024
+save-every: 50

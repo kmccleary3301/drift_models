@@ -1,0 +1,52 @@
+import subprocess
+import sys
+from pathlib import Path
+
+import torch
+
+
+def test_latent_checkpoint_includes_ema_and_scheduler_states(tmp_path: Path) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    checkpoint_path = tmp_path / "latent_ema_ckpt.pt"
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/train_latent.py",
+            "--device",
+            "cpu",
+            "--steps",
+            "2",
+            "--log-every",
+            "1",
+            "--groups",
+            "2",
+            "--negatives-per-group",
+            "2",
+            "--positives-per-group",
+            "2",
+            "--image-size",
+            "16",
+            "--patch-size",
+            "4",
+            "--hidden-dim",
+            "64",
+            "--depth",
+            "2",
+            "--num-heads",
+            "4",
+            "--use-ema",
+            "--scheduler",
+            "cosine",
+            "--checkpoint-path",
+            str(checkpoint_path),
+            "--save-every",
+            "1",
+        ],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    payload = torch.load(checkpoint_path, map_location="cpu")
+    assert "scheduler_state_dict" in payload
+    assert "ema_state_dict" in payload

@@ -1,0 +1,91 @@
+[project]
+name = "drifting-models-repro"
+version = "0.1.0"
+description = "Community PyTorch reproduction of Generative Modeling via Drifting"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Drifting Models Repro Maintainers" },
+]
+keywords = [
+  "drifting-models",
+  "generative-models",
+  "diffusion",
+  "pytorch",
+  "research-reproduction",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "torch>=2.3",
+  "numpy>=1.26",
+  "pillow>=10",
+  "tqdm>=4.66",
+]
+
+[project.urls]
+Homepage = "https://github.com/kmccleary3301/drift_models"
+Repository = "https://github.com/kmccleary3301/drift_models"
+Issues = "https://github.com/kmccleary3301/drift_models/issues"
+
+[project.optional-dependencies]
+eval = [
+  "torchvision>=0.18",
+]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+  "pyright>=1.1.380",
+  "build>=1.2.2",
+  "twine>=5.1.1",
+]
+imagenet = [
+  "torchvision>=0.18",
+]
+sdvae = [
+  "diffusers>=0.31.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.31.0",
+  "safetensors>=0.4.0",
+  "huggingface_hub>=0.24.0",
+]
+docs = [
+  "mkdocs>=1.6.1",
+  "mkdocs-material>=9.5.39",
+]
+all = [
+  "torchvision>=0.18",
+  "diffusers>=0.31.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.31.0",
+  "safetensors>=0.4.0",
+  "huggingface_hub>=0.24.0",
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+  "pyright>=1.1.380",
+  "build>=1.2.2",
+  "twine>=5.1.1",
+  "mkdocs>=1.6.1",
+  "mkdocs-material>=9.5.39",
+]
+
+[build-system]
+requires = ["hatchling>=1.24.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["drifting_models"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

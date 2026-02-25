@@ -1,0 +1,59 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  nightly-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            pyproject.toml
+            uv.lock
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[dev,eval]"
+      - name: Runtime preflight (nightly)
+        run: |
+          python scripts/runtime_preflight.py \
+            --device auto \
+            --check-torchvision \
+            --check-compile \
+            --strict \
+            --output-path outputs/runtime_preflight_nightly/preflight.json
+      - name: Build nightly runtime preflight summary
+        run: |
+          python scripts/summarize_runtime_preflight.py \
+            --input-glob "outputs/runtime_preflight_nightly/preflight.json" \
+            --output-md outputs/runtime_preflight_nightly/preflight_summary.md \
+            --output-json outputs/runtime_preflight_nightly/preflight_summary.json
+      - name: Add nightly runtime summary to job summary
+        shell: bash
+        run: |
+          if [ -f outputs/runtime_preflight_nightly/preflight_summary.md ]; then
+            cat outputs/runtime_preflight_nightly/preflight_summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload nightly runtime preflight artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-preflight-nightly-ubuntu-py3.12
+          path: |
+            outputs/runtime_preflight_nightly/preflight.json
+            outputs/runtime_preflight_nightly/preflight_summary.md
+            outputs/runtime_preflight_nightly/preflight_summary.json
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Run extended integration checks
+        run: |
+          pytest -q tests/integration/test_queue_warmup.py \
+            tests/integration/test_checkpoint_resume.py \
+            tests/integration/test_eval_fid_is_cache_roundtrip.py

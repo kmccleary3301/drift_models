@@ -1,0 +1,32 @@
+# Latent-MAE smoke config targeting sharded ImageNet-1k SD-VAE latents.
+# Fill in `real-tensor-shards-manifest-path` once the latent export exists.
+
+seed: 1337
+device: auto
+steps: 200
+log-every: 10
+
+batch-size: 64
+image-size: 32
+in-channels: 4
+num-classes: 1000
+
+base-channels: 64
+stages: 4
+encoder-arch: resnet_unet
+blocks-per-stage: 2
+norm-groups: 8
+
+mask-ratio: 0.5
+mask-patch-size: 2
+mask-schedule: fixed
+mask-warmup-steps: 0
+
+val-batch-size: 64
+learning-rate: 0.0001
+
+real-batch-source: tensor_shards
+real-loader-batch-size: 64
+real-num-workers: 0
+real-sanity-sample-batches: 2
+real-tensor-shards-manifest-path: outputs/datasets/imagenet1k_train_sdvae_latents_shards/manifest.json

@@ -1,0 +1,99 @@
+# Closest-feasible single-GPU approximation of Table 8 (B/2 latent).
+#
+# Rationale:
+# - Paper Table 8 uses very large grouped batches (B=8192) and long horizons.
+# - This host is single-GPU and the repo enforces single-process execution (DEC-0033 / DEC-0035).
+# - We keep the *structure* and *ratios* (Npos : Nseg : Nuncond = 2 : 1 : 0.5) while shrinking counts.
+#
+# This is intended for long-horizon single-GPU runs that are explicitly documented
+# as “closest feasible”, not paper-identical compute.
+
+steps: 200000
+log-every: 50
+save-every: 1000
+
+device: cuda:0
+seed: 1337
+precision: bf16
+
+# Generator (DiT-B/2 latent)
+num-classes: 1000
+image-size: 32
+channels: 4
+patch-size: 2
+hidden-dim: 768
+depth: 12
+num-heads: 12
+mlp-ratio: 4.0
+ffn-inner-dim: 2184
+register-tokens: 16
+norm-type: rmsnorm
+use-qk-norm: true
+use-rope: true
+
+# Drifting loss
+temperature: 0.05
+drift-temperatures: [0.02, 0.05, 0.2]
+drift-temperature-reduction: sum
+
+# Keep Table-8 ratios while shrinking grouped batch sizes:
+# Paper: groups=128, neg=64, pos=128, uncond=32
+groups: 16
+negatives-per-group: 8
+positives-per-group: 16
+unconditional-per-group: 4
+
+# Optimizer (paper betas; explicit wd)
+learning-rate: 4e-4
+adam-beta1: 0.9
+adam-beta2: 0.95
+weight-decay: 0.0
+scheduler: warmup_cosine
+warmup-steps: 10000
+
+use-ema: true
+ema-decay: 0.9995
+
+# CFG alpha sampling (Table 8 B/2 latent)
+alpha-min: 1.0
+alpha-max: 4.0
+alpha-dist: powerlaw
+alpha-power: 5.0
+
+# Feature loss (use currently-available MAE export; not paper-width yet)
+use-feature-loss: true
+feature-encoder: mae
+mae-encoder-path: outputs/imagenet/mae_variant_a_w64/mae_encoder.pt
+# Temporary exception (non-faithful tier): this run consumes legacy MAE exports
+# produced before the `paper_resnet34_unet` migration.
+mae-encoder-arch: resnet_unet
+feature-base-channels: 64
+feature-stages: 4
+feature-temperatures: [0.02, 0.05, 0.2]
+feature-temperature-aggregation: sum_drifts_then_mse
+feature-loss-term-reduction: sum
+include-input-x2-mean: true
+
+# Paper A.5/A.6: include raw drift loss term in addition to feature terms.
+feature-include-raw-drift-loss: true
+feature-raw-drift-loss-weight: 1.0
+
+# Queue + real batches (ImageNet SD-VAE latent shards)
+use-queue: true
+queue-store-device: cpu
+queue-prime-samples: 8192
+queue-push-batch: 256
+queue-per-class-capacity: 128
+queue-global-capacity: 16384
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 1
+# Temporary exception (non-faithful tier): strict without-replacement mode is
+# disabled here to avoid repeated hard stalls during long single-GPU queue churn.
+queue-strict-without-replacement: false
+queue-report-level: full
+
+real-batch-source: tensor_shards
+real-loader-batch-size: 256
+real-num-workers: 0
+real-sanity-sample-batches: 2
+real-tensor-shards-manifest-path: outputs/datasets/imagenet1k_train_sdvae_latents_shards/manifest.json

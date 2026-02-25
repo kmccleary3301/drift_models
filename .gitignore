@@ -1,0 +1,9 @@
+.env
+data/
+docs_tmp/
+.venv/
+.pytest_cache/
+outputs/
+dist/
+.ruff_cache/
+__pycache__/

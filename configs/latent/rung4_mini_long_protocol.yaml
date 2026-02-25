@@ -1,0 +1,55 @@
+# D2 rung4 mini-long protocol (synthetic queue + feature loss, corrected semantics)
+seed: 1337
+device: cuda
+steps: 10000
+log-every: 100
+save-every: 500
+
+groups: 4
+negatives-per-group: 4
+positives-per-group: 4
+unconditional-per-group: 2
+
+num-classes: 1000
+image-size: 16
+channels: 4
+patch-size: 4
+hidden-dim: 128
+depth: 3
+num-heads: 8
+mlp-ratio: 4.0
+register-tokens: 8
+
+temperature: 0.05
+drift-temperatures: [0.02, 0.05, 0.2]
+drift-temperature-reduction: sum
+
+learning-rate: 0.0001
+scheduler: none
+precision: bf16
+
+use-feature-loss: true
+feature-encoder: tiny
+feature-base-channels: 16
+feature-stages: 3
+feature-temperatures: [0.02, 0.05, 0.2]
+feature-temperature-aggregation: sum_drifts_then_mse
+feature-loss-term-reduction: sum
+include-input-x2-mean: true
+include-patch4-stats: false
+disable-shared-location-normalization: false
+disable-feature-temperature-sqrt-scaling: false
+
+use-queue: true
+queue-prime-samples: 2000
+queue-push-batch: 64
+queue-per-class-capacity: 64
+queue-global-capacity: 1000
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 1
+queue-strict-without-replacement: true
+queue-store-device: cpu
+
+real-batch-source: synthetic_dataset
+real-dataset-size: 20000
+real-loader-batch-size: 512

@@ -1,0 +1,90 @@
+# Paper Table 8 exact template: DiT-B/2 latent column.
+# Input/output: SD-VAE latent space (32x32x4), patch size 2 -> 16x16 tokens.
+# NOTE: This template encodes paper-facing hyperparameters; running this exact
+# effective batch is extremely compute/memory intensive.
+
+steps: 200000
+log-every: 50
+save-every: 1000
+
+device: auto
+seed: 1337
+precision: bf16
+
+# Table 8 (Generator Architecture)
+num-classes: 1000
+image-size: 32
+channels: 4
+patch-size: 2
+hidden-dim: 768
+depth: 12
+num-heads: 12
+mlp-ratio: 4.0
+# FFN inner dimension override to match the paper-reported DiT-B/2-like parameter count (~133M, excluding SD-VAE).
+ffn-inner-dim: 2184
+register-tokens: 16
+norm-type: rmsnorm
+use-qk-norm: true
+use-rope: true
+
+# Table 8 (Drifting Loss Computation)
+# class labels Ni=128, generated samples Nseg=64, positive samples Npos=128.
+groups: 128
+negatives-per-group: 64
+positives-per-group: 128
+
+temperature: 0.05
+drift-temperatures: [0.02, 0.05, 0.2]
+
+# Table 8 (Generator Optimizer)
+learning-rate: 4e-4
+adam-beta1: 0.9
+adam-beta2: 0.95
+weight-decay: 0.0
+scheduler: warmup_cosine
+warmup-steps: 10000
+use-ema: true
+# Table lists an EMA set {0.999, 0.9995, 0.9998, 0.9999}; this template picks one.
+ema-decay: 0.9995
+
+# Table 8 (CFG Configuration)
+alpha-min: 1.0
+alpha-max: 4.0
+alpha-dist: powerlaw
+alpha-power: 5.0
+alpha-point: 1.0
+alpha-point-prob: 0.0
+unconditional-per-group: 32
+
+# Feature encoder path used for drifting loss.
+use-feature-loss: true
+feature-encoder: mae
+mae-encoder-path: outputs/imagenet/mae_variant_a_w640/mae_encoder.pt
+mae-encoder-arch: paper_resnet34_unet
+feature-base-channels: 640
+feature-stages: 4
+feature-temperatures: [0.02, 0.05, 0.2]
+feature-temperature-aggregation: sum_drifts_then_mse
+feature-loss-term-reduction: sum
+include-input-x2-mean: true
+include-patch4-stats: true
+feature-include-raw-drift-loss: true
+feature-raw-drift-loss-weight: 1.0
+
+# Queue/data settings for large-scale latent training on SD-VAE shards.
+use-queue: true
+queue-prime-samples: 50000
+queue-push-batch: 64
+queue-per-class-capacity: 128
+queue-global-capacity: 1000
+queue-store-device: cpu
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 1
+queue-strict-without-replacement: true
+queue-report-level: full
+
+real-batch-source: tensor_shards
+real-loader-batch-size: 8192
+real-num-workers: 0
+real-sanity-sample-batches: 0
+real-tensor-shards-manifest-path: outputs/datasets/imagenet1k_train_sdvae_latents_shards/manifest.json

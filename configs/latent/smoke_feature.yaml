@@ -1,0 +1,29 @@
+# Stage-3 feature-space drifting smoke config
+seed: 1337
+device: cpu
+steps: 2
+log-every: 1
+groups: 2
+negatives-per-group: 2
+positives-per-group: 2
+num-classes: 1000
+image-size: 16
+channels: 4
+patch-size: 4
+hidden-dim: 64
+depth: 2
+num-heads: 4
+mlp-ratio: 4.0
+register-tokens: 8
+temperature: 0.05
+learning-rate: 0.0001
+use-feature-loss: true
+feature-base-channels: 8
+feature-stages: 2
+feature-temperatures: [0.02, 0.05, 0.2]
+feature-selected-stages: [0, 1]
+include-patch4-stats: false
+include-input-x2-mean: true
+disable-shared-location-normalization: false
+disable-feature-temperature-sqrt-scaling: false
+use-queue: false

@@ -1,0 +1,40 @@
+# CIFAR-10 pixel-space queue+feature quick eval/tracking config
+seed: 1337
+device: cpu
+steps: 20
+log-every: 5
+groups: 4
+negatives-per-group: 2
+positives-per-group: 2
+unconditional-per-group: 2
+num-classes: 10
+image-size: 32
+channels: 3
+patch-size: 4
+hidden-dim: 128
+depth: 2
+num-heads: 4
+mlp-ratio: 4.0
+register-tokens: 4
+temperature: 0.05
+learning-rate: 0.0001
+use-feature-loss: true
+feature-encoder: tiny
+feature-base-channels: 8
+feature-stages: 2
+feature-temperatures: [0.02, 0.05, 0.2]
+include-input-x2-mean: true
+use-queue: true
+queue-prime-samples: 500
+queue-push-batch: 64
+queue-per-class-capacity: 64
+queue-global-capacity: 1000
+queue-store-device: cpu
+queue-warmup-mode: class_balanced
+queue-warmup-min-per-class: 10
+queue-refill-policy: per_step
+real-batch-source: imagefolder
+real-imagefolder-root: outputs/datasets/cifar10_val
+real-loader-batch-size: 128
+real-transform-normalize: true
+

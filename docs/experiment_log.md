@@ -1,0 +1,2416 @@
+# Experiment Log
+
+Track every run with enough metadata for exact replay.
+
+## Record template
+- **Run ID**:
+- **Date**:
+- **Code hash**:
+- **Config path + hash**:
+- **Hardware**:
+- **Seed(s)**:
+- **Objective**:
+- **Key toggles**:
+- **Train metrics summary**:
+- **Eval metrics summary**:
+- **Artifacts**:
+- **Outcome**: success | partial | failed
+- **Notes / next action**:
+
+## Entries
+
+- **Run ID**: EXP-TOY-0001
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/toy/quick.yaml` (hash not yet tracked)
+- **Hardware**: CPU execution (validation), CUDA available in environment
+- **Seed(s)**: 1337
+- **Objective**: Stage-1 toy pipeline end-to-end run across anti-symmetry ablations
+- **Key toggles**: `--ablation all`, `--device cpu`, stop-grad target enabled
+- **Train metrics summary**: all ablations complete; JSON artifact written
+- **Eval metrics summary**: ranking by `mean_distance_to_target` saved in output JSON
+- **Artifacts**: `outputs/toy_quick/toy_results.json`
+- **Outcome**: success
+- **Notes / next action**: add 2D snapshot artifacts (checkpointed sample clouds) and regression thresholding
+
+- **Run ID**: EXP-STAGE2-0001
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args in `scripts/train_latent.py` smoke run (hash tracking pending)
+- **Hardware**: CPU execution (validation)
+- **Seed(s)**: 1337
+- **Objective**: Validate Stage-2 grouped drift training path with DiT-like generator
+- **Key toggles**: `--steps 4 --groups 2 --negatives-per-group 2 --positives-per-group 2 --image-size 16 --patch-size 4 --hidden-dim 64 --depth 2 --num-heads 4 --device cpu`
+- **Train metrics summary**: finite loss/drift/grad_norm each log step; optimizer updates confirmed in integration tests
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**: terminal JSON summary from `scripts/train_latent.py`
+- **Outcome**: success
+- **Notes / next action**: integrate feature-extractor pathway and switch loss from raw flattened images to feature vectors
+
+- **Run ID**: EXP-STAGE3-0001
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args in `scripts/train_latent.py` raw/feature smoke runs (hash tracking pending)
+- **Hardware**: CPU execution (validation)
+- **Seed(s)**: 1337
+- **Objective**: Validate Stage-3 feature-space drifting path integration
+- **Key toggles**:
+  - raw mode: `--steps 3 ... --device cpu`
+  - feature mode: `--steps 2 ... --device cpu --use-feature-loss --feature-base-channels 8 --feature-stages 2`
+- **Train metrics summary**:
+  - raw mode: finite low loss/drift with small grad norms
+  - feature mode: finite non-trivial loss/drift with stable grad norms
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**: terminal JSON summaries from both `scripts/train_latent.py` runs
+- **Outcome**: success
+- **Notes / next action**: begin replacing tiny feature encoder with configurable external encoder interface and grouped real-data samplers
+
+- **Run ID**: EXP-STAGE4-0001
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args in `scripts/train_latent.py` queue-backed smoke runs
+- **Hardware**: CPU execution (validation)
+- **Seed(s)**: 1337
+- **Objective**: Validate queue-backed class-conditional positives + unconditional negatives in both raw and feature-space modes
+- **Key toggles**:
+  - raw queue mode: `--use-queue --unconditional-per-group 2`
+  - feature+queue mode: `--use-feature-loss --use-queue --unconditional-per-group 2`
+- **Train metrics summary**: both runs produce finite losses, drift norms, and gradient norms across all logged steps
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**: terminal JSON summaries from both queue-backed runs
+- **Outcome**: success
+- **Notes / next action**: connect queue inputs to real class-conditional dataset loader and alpha-driven unconditional weighting schedule
+
+- **Run ID**: EXP-STAGE1-0002
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/toy/quick.yaml` (artifact-enabled run)
+- **Hardware**: CPU execution
+- **Seed(s)**: 1337
+- **Objective**: Close Stage-1 with artifact checkpoints and toy ablation report outputs
+- **Key toggles**: `scripts/train_toy.py --config configs/toy/quick.yaml --output-dir outputs/toy_quick --ablation all --device cpu`
+- **Train metrics summary**: all ablations run to completion with logged histories
+- **Eval metrics summary**: ranking exported; attraction-only remains worst by large margin
+- **Artifacts**:
+  - `outputs/toy_quick/toy_results.json`
+  - `outputs/toy_quick/toy_ablation_table.md`
+  - `outputs/toy_quick/*/step_*_samples.pt`
+  - `outputs/toy_quick/*/step_*_scatter.png`
+- **Outcome**: success
+- **Notes / next action**: begin Stage-2 architecture parity upgrades (RMSNorm/QK-Norm/RoPE)
+
+- **Run ID**: EXP-STAGE3-0002
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/smoke_feature_queue.yaml` (`c74ce37244d9b30f676f67fd302c3e699b1cbc6680a609a757f07d8ad76b9fec`)
+- **Hardware**: CPU execution for smoke, CUDA available
+- **Seed(s)**: 1337
+- **Objective**: Validate updated A.6 feature normalization semantics + per-temperature instrumentation in latent feature-space drifting
+- **Key toggles**: shared-location normalization enabled, feature temperatures `{0.02,0.05,0.2}`, queue+unconditional negatives enabled
+- **Train metrics summary**: finite losses and drift norms; per-temperature drift norms and scales logged each step
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**:
+  - `outputs/stage4_feature_queue_repro/latent_summary.json`
+  - `outputs/stage4_feature_queue_repro/env_fingerprint.json`
+- **Outcome**: success
+- **Notes / next action**: run ablations on shared-location normalization and temperature scaling in larger latent configs
+
+- **Run ID**: EXP-STAGE6-0001
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/mae/smoke_latent.yaml` (`d7effe3ab876f17ecdfc3407b55d449760d4e338f2fd195db1066026de3d5814`)
+- **Hardware**: CPU execution for smoke, CUDA available
+- **Seed(s)**: 1337
+- **Objective**: Validate latent MAE pretraining scaffold with masked reconstruction and multi-stage encoder outputs
+- **Key toggles**: mask ratio `0.6`, stages `3`, base channels `8`
+- **Train metrics summary**: stable masked reconstruction losses and finite gradient norms across steps
+- **Eval metrics summary**: smoke run only (no downstream generation metrics)
+- **Artifacts**:
+  - `outputs/stage6_mae_repro/mae_summary.json`
+  - `outputs/stage6_mae_repro/env_fingerprint.json`
+- **Outcome**: success
+- **Notes / next action**: connect MAE checkpoints as feature encoders in latent/pixel drifting runs
+
+- **Run ID**: EXP-STAGE7-0001
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/pixel/smoke_feature.yaml` (`7cb3fd1cd59cadb6fdebe6361952d731620b4d9fc7ff55604b833a078e737ead`)
+- **Hardware**: CPU execution for smoke, CUDA available
+- **Seed(s)**: 1337
+- **Objective**: Validate pixel-space grouped drifting scaffold with feature-space loss and reproducibility artifact writing
+- **Key toggles**: pixel channels `3`, image size `64`, tiny feature encoder, temperatures `{0.02,0.05,0.2}`
+- **Train metrics summary**: finite losses, drift norms, and per-temperature scale metrics with stable grad norms
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**:
+  - `outputs/stage7_pixel_repro/pixel_summary.json`
+  - `outputs/stage7_pixel_repro/env_fingerprint.json`
+- **Outcome**: success
+- **Notes / next action**: run MAE-backed pixel config (`smoke_feature_queue_mae.yaml`) and profile memory scaling
+
+- **Run ID**: EXP-STAGE7-0002
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/pixel/smoke_feature_queue_mae.yaml` (`b43d582dd2790843c6a7448c1c758ce82f376de96d97802d847776c5dd9658c8`)
+- **Hardware**: CPU execution for smoke, CUDA available
+- **Seed(s)**: 1337
+- **Objective**: Validate MAE-backed pixel queue training with profiling metrics and dataset-backed queue updates
+- **Key toggles**: `feature_encoder=mae`, queue enabled, temperatures `{0.02,0.05,0.2}`, unconditional negatives enabled
+- **Train metrics summary**: finite losses and drift metrics; mean step time `~3.056s`; mean generated throughput `~1.309 img/s`
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**:
+  - `outputs/stage7_pixel_queue_mae_profile/pixel_summary.json`
+  - `outputs/stage7_pixel_queue_mae_profile/env_fingerprint.json`
+- **Outcome**: success
+- **Notes / next action**: run same config on CUDA for memory/throughput scaling profile and compare tiny-vs-MAE encoder cost
+
+- **Run ID**: EXP-STAGE7-0003
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args (CUDA profile run), no config file hash
+- **Hardware**: CUDA execution
+- **Seed(s)**: 1337
+- **Objective**: Validate CUDA profile for MAE-backed pixel queue configuration
+- **Key toggles**: `device=cuda`, `feature_encoder=mae`, queue enabled, temperatures `{0.02,0.05,0.2}`
+- **Train metrics summary**: finite losses/drift norms; max peak CUDA memory `72.32 MB`; mean throughput `0.80 img/s`
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**:
+  - `outputs/stage7_pixel_queue_mae_profile_cuda/pixel_summary.json`
+  - `outputs/stage7_pixel_queue_mae_profile_cuda/env_fingerprint.json`
+- **Outcome**: success
+- **Notes / next action**: apply same CUDA profiling methodology to latent queue-feature run
+
+- **Run ID**: EXP-STAGE5-0001
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args (CUDA latent queue-feature smoke), resolved config hash in artifact
+- **Hardware**: CUDA execution
+- **Seed(s)**: 1337
+- **Objective**: Validate latent queue-feature run with AMP (`bf16`), gradient accumulation, scheduler, EMA, and queue diagnostics
+- **Key toggles**: `precision=bf16`, `grad_accum_steps=2`, `scheduler=cosine`, `use_ema=true`, queue warmup `class_balanced`
+- **Train metrics summary**: finite losses/drift; max peak CUDA memory `25.92 MB`; mean throughput `4.85 img/s`; underflow counters tracked
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**:
+  - `outputs/stage5_latent_queue_feature_cuda/latent_summary.json`
+  - `outputs/stage5_latent_queue_feature_cuda/env_fingerprint.json`
+- **Outcome**: success
+- **Notes / next action**: run latent ablation block for temperature, normalization, and feature-subset comparisons
+
+- **Run ID**: EXP-STAGE5-0002
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/run_latent_ablations.py` variant sweep (device `cuda`)
+- **Hardware**: CUDA execution
+- **Seed(s)**: default script seed path
+- **Objective**: Execute short latent ablations across temperatures, shared-location normalization, and feature subsets
+- **Key toggles**: 9 variants (`temp_multi`, `temp_0_02`, `temp_0_05`, `temp_0_2`, `shared_norm_on/off`, `feature_ab/ac/ad`)
+- **Train metrics summary**:
+  - `temp_multi` loss `6.9909`
+  - `shared_norm_off` loss `8.4027` vs `shared_norm_on` `6.9909`
+  - feature-set comparisons exported in markdown table
+- **Eval metrics summary**: ablation proxy metrics only (no FID/IS)
+- **Artifacts**:
+  - `outputs/latent_ablations_cuda/latent_ablation_summary.json`
+  - `outputs/latent_ablations_cuda/latent_ablation_summary.md`
+- **Outcome**: success
+- **Notes / next action**: extend ablations to longer horizons and persist run registry entries
+
+- **Run ID**: EXP-STAGE7-0004
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args (MAE export->pixel load smoke), no config file hash
+- **Hardware**: CPU execution
+- **Seed(s)**: 1337
+- **Objective**: Validate explicit MAE encoder export/import path for pixel feature loss runs
+- **Key toggles**: `train_mae.py --export-encoder-path ...` followed by `train_pixel.py --feature-encoder mae --mae-encoder-path ...`
+- **Train metrics summary**: MAE pretrain and pixel run both finish with finite losses and perf logs; `mae_encoder_path` recorded in pixel summary
+- **Eval metrics summary**: smoke run only (no FID/IS)
+- **Artifacts**:
+  - `outputs/stage7_mae_encoder_for_pixel/mae_encoder.pt`
+  - `outputs/stage7_mae_encoder_for_pixel/mae_summary.json`
+  - `outputs/stage7_pixel_mae_encoder_load_smoke/pixel_summary.json`
+- **Outcome**: success
+- **Notes / next action**: extend this path to queue-enabled pixel configs and add external MAE checkpoint compatibility checks
+
+- **Run ID**: EXP-STAGE8-0001
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args for `scripts/eval_fid_is.py` (tensor-file smoke)
+- **Hardware**: CPU execution
+- **Seed(s)**: N/A (evaluation-only run)
+- **Objective**: Validate new FID/IS evaluation scaffold and JSON artifact output path
+- **Key toggles**: `--inception-weights none`, tensor-file reference/generated sources, `--output-path` enabled
+- **Train metrics summary**: N/A
+- **Eval metrics summary**: script emits `fid`, `inception_score_mean`, `inception_score_std`; marked `metrics_validity=approximate` when untrained weights are used
+- **Artifacts**:
+  - `outputs/stage8_eval_smoke/eval_summary.json`
+  - `outputs/stage8_eval_smoke/ref.pt`
+  - `outputs/stage8_eval_smoke/gen.pt`
+- **Outcome**: success
+- **Notes / next action**: rerun with `--inception-weights pretrained` for standard metrics on real reference/generated datasets
+
+- **Run ID**: EXP-STAGE7-0005
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: integration validation via `tests/integration/test_pixel_mae_encoder_mismatch.py`
+- **Hardware**: CPU execution
+- **Seed(s)**: N/A (test-driven)
+- **Objective**: verify MAE export config mismatch guard fails fast with clear error in pixel training
+- **Key toggles**: MAE export with `in_channels=4` loaded into pixel config expecting `channels=3`
+- **Train metrics summary**: pixel run intentionally aborts before train loop with config mismatch error
+- **Eval metrics summary**: N/A
+- **Artifacts**: test-generated MAE export in temporary test directory
+- **Outcome**: success
+- **Notes / next action**: optionally add strict mode requiring export config metadata for all MAE load paths
+
+- **Run ID**: EXP-STAGE8-0002
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args for `scripts/eval_fid_is.py` with `inception_weights=pretrained`
+- **Hardware**: CPU execution
+- **Seed(s)**: N/A (evaluation-only)
+- **Objective**: Compute standard FID/IS with pretrained Inception on real ImageFolder datasets (CIFAR-10 export)
+- **Key toggles**: `reference_source=imagefolder`, `generated_source=imagefolder`, `inception_weights=pretrained`, `N=500`
+- **Train metrics summary**: N/A
+- **Eval metrics summary**:
+  - identical reference/generated set: `fid=0.0` (sanity check)
+  - noisy generated set: `fid≈21.19` (sensitivity check)
+- **Artifacts**:
+  - `outputs/stage8_cifar10/eval_pretrained_identical.json`
+  - `outputs/stage8_cifar10/eval_pretrained_noisy.json`
+  - `outputs/stage8_cifar10/reference/` (ImageFolder export)
+  - `outputs/stage8_cifar10/generated_noisy/` (ImageFolder export)
+- **Outcome**: success
+- **Notes / next action**: use this pipeline for ImageNet val reference and generator outputs once sampling is implemented
+
+- **Run ID**: EXP-STAGE7-0006
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: scripted compare runner `scripts/run_pixel_queue_mae_export_compare.py`
+- **Hardware**: CPU execution
+- **Seed(s)**: 1337 (pixel script default)
+- **Objective**: Compare pixel queue MAE runs with and without loading MAE export weights under the same config
+- **Key toggles**: `configs/pixel/smoke_feature_queue_mae.yaml`, `--mae-encoder-path outputs/stage7_mae_encoder_for_pixel/mae_encoder.pt`
+- **Train metrics summary**: both runs complete with finite losses and similar throughput (smoke horizon too short for quality deltas)
+- **Eval metrics summary**: N/A
+- **Artifacts**:
+  - `outputs/stage7_pixel_queue_mae_export_compare_scripted/compare.json`
+  - `outputs/stage7_pixel_queue_mae_export_compare_scripted/compare.md`
+  - `outputs/stage7_pixel_queue_mae_export_compare_scripted/no_export/pixel_summary.json`
+  - `outputs/stage7_pixel_queue_mae_export_compare_scripted/with_export/pixel_summary.json`
+- **Outcome**: success
+- **Notes / next action**: extend to longer runs and track downstream FID/IS once sampling is available
+
+- **Run ID**: EXP-STAGE8-0003
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: integration validation via `tests/integration/test_sample_pixel_smoke.py`
+- **Hardware**: CPU execution
+- **Seed(s)**: 1337 (script defaults)
+- **Objective**: Validate pixel checkpoint sampling to ImageFolder with reproducible `sample_summary.json`
+- **Key toggles**: `scripts/sample_pixel.py --n-samples 8 --batch-size 4` against a tiny CPU-trained checkpoint
+- **Train metrics summary**: N/A (sampling-only)
+- **Eval metrics summary**: N/A
+- **Artifacts**: test-generated ImageFolder in temporary test directory
+- **Outcome**: success
+- **Notes / next action**: connect sampler to end-to-end pixel eval runner and reference dataset exports
+
+- **Run ID**: EXP-STAGE8-0004
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: unit validation via `tests/unit/test_sample_pixel_schedules.py`
+- **Hardware**: CPU execution
+- **Seed(s)**: N/A
+- **Objective**: Validate sampler alpha schedules (`constant/linear/list`) are deterministic and index-stable
+- **Key toggles**: `--alpha-schedule linear/list` and index cycling
+- **Train metrics summary**: N/A
+- **Eval metrics summary**: N/A
+- **Artifacts**: test assertions only
+- **Outcome**: success
+- **Notes / next action**: add end-to-end alpha sweep runner once sampling+eval pipeline is integrated
+
+- **Run ID**: EXP-STAGE8-0005
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: integration validation via `tests/integration/test_end_to_end_latent_eval_smoke.py`
+- **Hardware**: CPU execution
+- **Seed(s)**: 1337 (script defaults)
+- **Objective**: Validate latent end-to-end runner (train -> latent sampling -> ImageFolder decode -> FID/IS)
+- **Key toggles**: `scripts/run_end_to_end_latent_eval.py --train-steps 2 --sample-count 8 --inception-weights none`
+- **Train metrics summary**: N/A (smoke horizon)
+- **Eval metrics summary**: JSON written; Inception is randomly initialized (`--inception-weights none`) so values are not comparable to published metrics
+- **Artifacts**: test-generated `run_summary.json` + `eval_summary.json` in temporary test directory
+- **Outcome**: success
+- **Notes / next action**: implement alpha sweeps and last-K checkpoint evaluation on both pixel and latent protocols
+
+- **Run ID**: pixel_cifar_short_alpha_sweep_pretrained-20260209-230906
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: None
+- **Hardware**: cuda
+- **Seed(s)**: 0
+- **Objective**: Sweep alpha values and record FID/IS per alpha
+- **Key toggles**: {"alphas": [1.0, 2.0, 3.0], "inception_weights": "pretrained", "mode": "pixel", "n_samples": 5000, "reference_cache": true}
+- **Artifacts**:
+  - `outputs/milestone70/pixel_cifar_short_alpha_sweep_pretrained/alpha_sweep_summary.json`
+  - `outputs/milestone70/pixel_cifar_short_alpha_sweep_pretrained/alpha_sweep_summary.md`
+- **Outcome**: success
+- **Notes / next action**: use pretrained Inception for comparable sweeps
+
+- **Run ID**: pixel_cifar_short_lastk_pretrained-20260209-231028
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: None
+- **Hardware**: cuda
+- **Seed(s)**: 0
+- **Objective**: Evaluate last-K step checkpoints with consistent sampling/eval settings
+- **Key toggles**: {"inception_weights": "pretrained", "k": 5, "mode": "pixel", "n_samples": 5000, "reference_cache": true}
+- **Artifacts**:
+  - `outputs/milestone70/pixel_cifar_short_lastk_pretrained/last_k_summary.json`
+  - `outputs/milestone70/pixel_cifar_short_lastk_pretrained/last_k_summary.md`
+- **Outcome**: success
+- **Notes / next action**: increase K and sample counts for trend stability
+
+- **Run ID**: pixel_cifar_short_eval_pretrained-20260209-231241
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args for `scripts/eval_fid_is.py` with `inception_weights=pretrained`
+- **Hardware**: cuda
+- **Seed(s)**: N/A (evaluation-only)
+- **Objective**: Evaluate CIFAR-10 pixel samples from the 500-step real-queue run with pretrained Inception
+- **Key toggles**: {"generated_samples": 5000, "inception_weights": "pretrained", "reference_samples": 10000, "reference_stats": "outputs/milestone70/cifar10_val_10k/reference_stats_pretrained.pt"}
+- **Eval metrics summary**:
+  - `fid≈479.26`, `IS≈1.0249`
+- **Artifacts**:
+  - `outputs/milestone70/pixel_cifar_short_eval/eval_pretrained.json`
+- **Outcome**: success
+- **Notes / next action**: treat this as pipeline validation only; extend training horizon before interpreting metrics (note: environment clock shows 2026-02-09; user-facing reporting may use 2026-02-10 depending on timezone)
+
+- **Run ID**: latent_cifar_sdvae_short_alpha_sweep_pretrained-20260209-233516
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: None
+- **Hardware**: cuda
+- **Seed(s)**: 0
+- **Objective**: Sweep alpha values and record FID/IS per alpha
+- **Key toggles**: {"alphas": [1.0, 2.0, 3.0], "inception_weights": "pretrained", "mode": "latent", "n_samples": 2000, "reference_cache": true}
+- **Artifacts**:
+  - `outputs/milestone80/latent_cifar_sdvae_short_alpha_sweep_pretrained/alpha_sweep_summary.json`
+  - `outputs/milestone80/latent_cifar_sdvae_short_alpha_sweep_pretrained/alpha_sweep_summary.md`
+- **Outcome**: success
+- **Notes / next action**: use pretrained Inception for comparable sweeps
+
+- **Run ID**: latent_cifar_sdvae_short_lastk_pretrained-20260209-234007
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: None
+- **Hardware**: cuda
+- **Seed(s)**: 0
+- **Objective**: Evaluate last-K step checkpoints with consistent sampling/eval settings
+- **Key toggles**: {"inception_weights": "pretrained", "k": 4, "mode": "latent", "n_samples": 2000, "reference_cache": true}
+- **Artifacts**:
+  - `outputs/milestone80/latent_cifar_sdvae_short_lastk_pretrained/last_k_summary.json`
+  - `outputs/milestone80/latent_cifar_sdvae_short_lastk_pretrained/last_k_summary.md`
+- **Outcome**: success
+- **Notes / next action**: increase K and sample counts for trend stability
+
+- **Run ID**: latent_cifar_sdvae_short_train-20260209-232548
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/cifar10_sdvae_latents_queue_short.yaml` (`sha256=0d1e05204335f94bcbbd96d1cde2e2810a7e134394a28f5a43dd40b1a35a83d6`)
+- **Hardware**: cuda
+- **Seed(s)**: 0
+- **Objective**: Validate a real SD-VAE-latent training path using queue mode with `tensor_file` provider
+- **Key toggles**: {"alpha_fixed": 1.0, "channels": 4, "image_size": 32, "patch_size": 2, "real_batch_source": "tensor_file", "steps": 200, "use_feature_loss": false, "use_queue": true}
+- **Train metrics summary**: stable finite losses across 200 steps; queue warmup is class-balanced with zero underflow
+- **Artifacts**:
+  - `outputs/milestone80/latent_cifar_sdvae_short/latent_summary.json`
+  - `outputs/milestone80/latent_cifar_sdvae_short/checkpoints/checkpoint_step_00000200.pt`
+- **Outcome**: success
+- **Notes / next action**: enable feature loss with SD-VAE decode to better match the paper's latent protocol
+
+- **Run ID**: latent_cifar_sdvae_short_eval_pretrained-20260209-233050
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: eval against `outputs/datasets/cifar10_val_256` using `scripts/eval_fid_is.py --inception-weights pretrained`
+- **Hardware**: cuda
+- **Seed(s)**: N/A (evaluation-only)
+- **Objective**: Evaluate SD-VAE-decoded latent samples (CIFAR-10 upscaled reference) with pretrained Inception
+- **Key toggles**: {"generated_samples": 5000, "inception_weights": "pretrained", "reference_samples": 10000, "reference_stats": "outputs/milestone80/cifar10_val_256_reference_stats_pretrained.pt"}
+- **Eval metrics summary**:
+  - `fid≈368.24`, `IS≈1.2562`
+- **Artifacts**:
+  - `outputs/milestone80/latent_cifar_sdvae_short_eval/eval_pretrained.json`
+  - `outputs/milestone80/latent_cifar_sdvae_short_samples_sdvae/sample_summary.json`
+- **Outcome**: success
+- **Notes / next action**: treat this as protocol wiring validation; extend horizon + add feature encoder for meaningful quality trends
+
+- **Run ID**: mae_cifar_sdvae_short_train-20260209-234419
+- **Date**: 2026-02-09
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args for `scripts/train_mae.py` (real provider: `tensor_file`)
+- **Hardware**: cuda
+- **Seed(s)**: 0
+- **Objective**: Validate MAE pretraining on real SD-VAE latents (32x32x4) using the same provider stack as latent training
+- **Key toggles**: {"base_channels": 32, "batch_size": 128, "image_size": 32, "in_channels": 4, "mask_patch_size": 2, "mask_ratio": 0.5, "real_batch_source": "tensor_file", "steps": 200, "stages": 3}
+- **Train metrics summary**: masked reconstruction loss decreases from ~1.23 to ~0.42 over 200 steps (val loss remains higher; short horizon)
+- **Artifacts**:
+  - `outputs/milestone80/mae_cifar_sdvae_short/mae_summary.json`
+  - `outputs/milestone80/mae_cifar_sdvae_short/mae_encoder.pt`
+- **Outcome**: success
+- **Notes / next action**: wire this encoder into latent drifting feature loss to match the paper’s latent-MAE setup
+
+- **Run ID**: latent_cifar_sdvae_smoke_mae_feature_eval_pretrained-20260210-000712
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/cifar10_sdvae_latents_queue_smoke_mae.yaml` (`sha256=8d187455fe7a1d29b4efabb86ff9bf8e8fa31aca79cb3a39849b0bb7a4d914b8`)
+- **Hardware**: cuda
+- **Seed(s)**: 0
+- **Objective**: Smoke ablation: latent drifting with MAE feature loss on SD-VAE latents, decoded via SD-VAE for pretrained-Inception FID/IS
+- **Key toggles**: {"feature_encoder": "mae", "inception_weights": "pretrained", "n_samples": 2000, "steps": 60}
+- **Eval metrics summary**:
+  - `fid≈358.96`, `IS≈1.2559`
+- **Artifacts**:
+  - `outputs/milestone80/latent_cifar_sdvae_smoke_mae_feature/latent_summary.json`
+  - `outputs/milestone80/latent_cifar_sdvae_smoke_mae_feature_samples/sample_summary.json`
+  - `outputs/milestone80/latent_cifar_sdvae_smoke_mae_feature_eval/eval_pretrained.json`
+- **Outcome**: success
+- **Notes / next action**: run a matched baseline without MAE features at the same horizon and compare; then scale horizons once trends are stable
+
+- **Run ID**: imagenet_latent_smoke_mae_eval_pretrained-20260210-183641
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/imagenet1k_sdvae_latents_queue_smoke_mae.yaml` (latent smoke), plus pipeline runner `scripts/run_imagenet_latent_pipeline.py`
+- **Hardware**: cuda
+- **Seed(s)**: 1337
+- **Objective**: Establish a real ImageNet-1k latent protocol smoke run end-to-end (latent drifting + SD-VAE decode + pretrained-Inception FID/IS) using cached ImageNet val reference stats
+- **Key toggles**: {"generated_samples": 5000, "reference_samples": 50000, "inception_weights": "pretrained", "load_reference_stats": "outputs/datasets/imagenet1k_val_reference_stats_pretrained.pt", "sd_vae_model_id": "stabilityai/sd-vae-ft-mse"}
+- **Eval metrics summary**:
+  - `fid≈429.31`, `IS≈1.4032` (smoke-horizon; interpret cautiously)
+- **Artifacts**:
+  - `outputs/imagenet/latent_smoke_mae/checkpoint.pt`
+  - `outputs/imagenet/latent_smoke_mae/latent_summary.json`
+  - `outputs/imagenet/latent_smoke_mae/queue_report.md`
+  - `outputs/imagenet/latent_smoke_mae_samples_2026-02-10_183641/sample_summary.json`
+  - `outputs/imagenet/latent_smoke_mae_eval_2026-02-10_183641/eval_pretrained.json`
+  - `outputs/logs/imagenet_latent_pipeline_state.json`
+- **Outcome**: success
+- **Notes / next action**: push horizon (steps) and checkpoint sweeps; track throughput and disk growth (ImageNet raw is large) before attempting Table 8 scale
+
+- **Run ID**: disk_cleanup_imagenet_raw-20260210-1953
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Objective**: reclaim disk space after ImageNet latent protocol artifacts are produced and verified
+- **Key actions**:
+  - Full manifest verification completed:
+    - `outputs/datasets/imagenet1k_train_sdvae_latents_shards/verify_full.json`
+    - `outputs/datasets/imagenet1k_val_sdvae_latents_shards/verify_full.json`
+  - Removed redundant/incomplete train archives:
+    - `data/ILSVRC2012_img_train.tar` (partial)
+    - `data/ILSVRC2012_img_train_t3.tar` (unused)
+  - Removed extracted ImageFolder trees:
+    - `outputs/datasets/imagenet1k_raw/train`
+    - `outputs/datasets/imagenet1k_raw/val`
+- **Disk delta**:
+  - `/mnt/drive_4` free space increased from ~`274G` to ~`421G`
+- **Outcome**: success
+
+- **Run ID**: toy_long_baseline_vs_attraction_only-20260210-2008
+- **Date**: 2026-02-10
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/toy/long.yaml` (50k steps, log every 1k)
+- **Hardware**: cpu
+- **Seed(s)**: 1337
+- **Objective**: produce durable long-horizon toy artifacts (baseline vs anti-symmetry ablation proxy via attraction-only)
+- **Artifacts**:
+  - `outputs/toy_long_baseline/toy_results.json`
+  - `outputs/toy_long_baseline/baseline/step_050000_final_scatter.png`
+  - `outputs/toy_long_attraction_only/toy_results.json`
+  - `outputs/toy_long_attraction_only/attraction_only/step_050000_final_scatter.png`
+- **Outcome**: success
+- **Notes / next action**: use these as qualitative convergence evidence; add precision/temperature/equilibrium tests next
+
+- **Run ID**: EXP-STAGE5-IMAGENET-PROVENANCE-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: N/A (checksum/provenance operation)
+- **Hardware**: CPU (archive checksum pass)
+- **Seed(s)**: N/A
+- **Objective**: Record cryptographic provenance for ImageNet-1k archives used in latent protocol.
+- **Key toggles**: full `md5` + `sha256` for train/val/devkit archives.
+- **Train metrics summary**: N/A
+- **Eval metrics summary**: N/A
+- **Artifacts**:
+  - `outputs/datasets/imagenet1k_provenance.json`
+- **Outcome**: success
+- **Notes / next action**: extraction script now auto-writes provenance with cache reuse (`scripts/prepare_imagenet1k_from_archives.py`).
+
+- **Run ID**: EXP-STAGE5-TABLE8-BENCH-PROXY-GPU-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: Table-8 proxy merged configs generated by benchmark runner
+- **Hardware**: CUDA (RTX 6000 Ada x2)
+- **Seed(s)**: 1337
+- **Objective**: Produce throughput/memory readiness benchmark artifacts for Table-8 latent B/2 and L/2 architectures under proxy batch.
+- **Key toggles**: `groups=1`, `negatives=2`, `positives=2`, `unconditional=1`, `steps=2`.
+- **Train metrics summary**:
+  - B/2 proxy: `mean_step_time_s≈3.12`, `img/s≈1.45`, `max_peak_cuda_mem_mb≈3955.52`
+  - L/2 proxy: `mean_step_time_s≈1.19`, `img/s≈1.81`, `max_peak_cuda_mem_mb≈13171.77`
+- **Eval metrics summary**: N/A
+- **Artifacts**:
+  - `outputs/imagenet/benchmarks/table8_latent_proxy_gpu/table8_latent_benchmark_summary.json`
+  - `outputs/imagenet/benchmarks/table8_latent_proxy_gpu/table8_latent_benchmark_summary.md`
+- **Outcome**: success
+- **Notes / next action**: runner now writes merged benchmark configs so proxy overrides are not clobbered by config-file precedence.
+
+- **Run ID**: EXP-STAGE5-IMAGENET-NN-AUDIT-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/audit_nearest_neighbors.py` CLI run
+- **Hardware**: CUDA (`cuda:1`) for feature extraction
+- **Seed(s)**: N/A (analysis utility)
+- **Objective**: Add and execute nearest-neighbor audit for generated ImageNet latent smoke samples.
+- **Key toggles**: `max_generated=256`, `max_reference=5000`, ResNet50 ImageNet features.
+- **Train metrics summary**: N/A
+- **Eval metrics summary**: audit-only (nearest-neighbor cosine similarity + label-match rate)
+- **Artifacts**:
+  - `outputs/imagenet/latent_smoke_mae_nn_audit.json`
+- **Outcome**: success
+- **Notes / next action**: rerun with larger reference pool after long-horizon checkpoints are available.
+
+- **Run ID**: EXP-STAGE5-IMAGENET-ABLATION-B2-STEP100-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2.yaml`
+- **Hardware**: CUDA (`cuda:0`)
+- **Seed(s)**: 1337
+- **Objective**: Run a meaningful-horizon ImageNet latent ablation training run beyond smoke scale.
+- **Key toggles**: DiT-B/2-like architecture (`hidden_dim=768`, `depth=12`), SD-VAE latent shards, MAE feature loss, queue mode.
+- **Train metrics summary**: run progressed to `step=100` with checkpoints at steps `50` and `100`.
+- **Eval metrics summary**: tracked via dedicated alpha/last-k evaluations below.
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_300/checkpoint.pt`
+  - `outputs/imagenet/latent_ablation_b2_300/checkpoints/checkpoint_step_00000050.pt`
+  - `outputs/imagenet/latent_ablation_b2_300/checkpoints/checkpoint_step_00000100.pt`
+  - `outputs/imagenet/latent_ablation_b2_300/latent_summary.json`
+- **Outcome**: success
+- **Notes / next action**: continue from step-100 checkpoint for longer horizons as needed.
+
+- **Run ID**: EXP-STAGE5-IMAGENET-ALPHA-SWEEP-STEP50-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/eval_alpha_sweep.py` (latent mode, checkpoint step 50)
+- **Hardware**: CUDA (`cuda:1`)
+- **Seed(s)**: 1337
+- **Objective**: Evaluate alpha sensitivity on the ablation checkpoint.
+- **Key toggles**: alphas `{1.0, 1.5, 2.0}`, `n_samples=1000`, SD-VAE decode, pretrained Inception with precomputed reference stats.
+- **Train metrics summary**: N/A
+- **Eval metrics summary**:
+  - `alpha=1.0`: `FID≈476.83`, `IS≈1.1261`
+  - `alpha=1.5`: `FID≈477.03`, `IS≈1.1262`
+  - `alpha=2.0`: `FID≈476.72`, `IS≈1.1264`
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_300_alpha_sweep_step50/alpha_sweep_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_300_alpha_sweep_step50/alpha_sweep_summary.md`
+- **Outcome**: success
+- **Notes / next action**: repeat sweep on later checkpoints (`step>=100`) to confirm trend persistence.
+
+- **Run ID**: EXP-STAGE5-IMAGENET-LASTK-STEP50-100-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/eval_last_k_checkpoints.py` (`k=2`)
+- **Hardware**: CUDA (`cuda:0`)
+- **Seed(s)**: 1337
+- **Objective**: Validate checkpoint trend quality progression.
+- **Key toggles**: SD-VAE decode, pretrained Inception, loaded ImageNet val reference stats.
+- **Train metrics summary**: N/A
+- **Eval metrics summary**:
+  - `step=50`: `FID≈476.83`, `IS≈1.1261`
+  - `step=100`: `FID≈280.64`, `IS≈1.2375`
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_300_lastk_step_eval/last_k_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_300_lastk_step_eval/last_k_summary.md`
+- **Outcome**: success
+- **Notes / next action**: extend to larger `K` once additional checkpoints are produced.
+
+- **Run ID**: EXP-STAGE5-IMAGENET-FIXED-SEED-GRIDS-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/sample_fixed_seed_grids.py`
+- **Hardware**: CUDA (`cuda:0`)
+- **Seed(s)**: 1337
+- **Objective**: Produce fixed-seed qualitative checkpoint trajectory grids.
+- **Key toggles**: sampled checkpoints `{50,100}`, `grid_samples=16`, SD-VAE decode to `256x256`.
+- **Train metrics summary**: N/A
+- **Eval metrics summary**: qualitative artifact generation.
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_300_fixed_seed_grids/fixed_seed_grid_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_300_fixed_seed_grids/grid_00000050.png`
+  - `outputs/imagenet/latent_ablation_b2_300_fixed_seed_grids/grid_00000100.png`
+- **Outcome**: success
+- **Notes / next action**: include these panels in the reproduction report qualitative section.
+
+- **Run ID**: EXP-STAGE6-IMAGENET-MAE-CLSFT-W64-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI run of `scripts/train_mae.py` resuming `outputs/imagenet/mae_variant_a_w64/checkpoint.pt`
+- **Hardware**: CUDA (`cuda`)
+- **Seed(s)**: 1337
+- **Objective**: implement and exercise MAE classifier fine-tuning (`cls ft`) on ImageNet SD-VAE latent shards, then export a fine-tuned MAE encoder variant.
+- **Key toggles**: `cls_ft_steps=120`, `cls_ft_lr=1e-4`, `cls_ft_batch_size=64`, `real_batch_source=tensor_shards`
+- **Train metrics summary**:
+  - `cls_ft` train loss decreased from `~6.78` to `~1.66` over 120 steps.
+  - `cls_ft` train top-1 increased from `0.00` to `~0.44` (short-horizon, training-batch estimate).
+- **Artifacts**:
+  - `outputs/imagenet/mae_variant_a_w64_clsft/mae_summary.json`
+  - `outputs/imagenet/mae_variant_a_w64_clsft/mae_encoder_clsft.pt`
+  - `outputs/imagenet/mae_variant_a_w64_clsft/checkpoint.pt`
+- **Outcome**: success
+- **Notes / next action**: this enables Stage-6 “cls ft” branch; quality impact must be judged from downstream latent runs, not cls-only loss.
+
+- **Run ID**: EXP-STAGE6-IMAGENET-MAE-VARIANT-IMPACT-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: controlled CLI protocol (train `scripts/train_latent.py` + sample `scripts/sample_latent.py` + eval `scripts/eval_fid_is.py`)
+- **Hardware**: CUDA (`cuda`)
+- **Seed(s)**: 1337
+- **Objective**: quantify downstream ImageNet latent generation quality impact of MAE encoder variants under fixed short-run conditions.
+- **Key toggles**: per variant: `steps=30`, `n_samples=1000`, pretrained Inception, cached ImageNet val reference stats.
+- **Eval metrics summary**:
+  - `w64`: `FID≈370.28`, `IS≈1.0047`
+  - `w96`: `FID≈362.33`, `IS≈1.3464`
+  - `w64_clsft`: `FID≈378.39`, `IS≈1.0000`
+- **Artifacts**:
+  - `outputs/imagenet/latent_mae_variant_impact/w64/latent_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact/w96/latent_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact/w64_clsft/latent_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact/mae_variant_impact_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact/mae_variant_impact_summary.md`
+- **Outcome**: success
+- **Notes / next action**: preliminary ranking favors `w96`; repeat at longer horizons and larger sample counts before locking the default MAE variant.
+
+- **Run ID**: EXP-STAGE6-IMAGENET-MAE-VARIANT-IMPACT-LONG100-S5K-CUDA1-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: controlled CLI protocol (`scripts/train_latent.py` + `scripts/sample_latent.py` + `scripts/eval_fid_is.py`) with explicit `--device cuda:1`
+- **Hardware**: CUDA (`cuda:1` pinned for train/sample/eval)
+- **Seed(s)**: 1337
+- **Objective**: rerun MAE-variant downstream impact at a longer horizon and larger eval set to de-risk short-horizon ranking noise.
+- **Key toggles**: per variant: `steps=100`, `n_samples=5000`, pretrained Inception, cached ImageNet val reference stats.
+- **Eval metrics summary**:
+  - `w64`: `FID≈369.78`, `IS≈1.0000`
+  - `w64_clsft`: `FID≈398.03`, `IS≈1.0026`
+  - `w96`: `FID≈475.05`, `IS≈1.0024`
+- **Artifacts**:
+  - `outputs/imagenet/latent_mae_variant_impact_long100_s5k_cuda1/w64/latent_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact_long100_s5k_cuda1/w96/latent_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact_long100_s5k_cuda1/w64_clsft/latent_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact_long100_s5k_cuda1/mae_variant_impact_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact_long100_s5k_cuda1/mae_variant_impact_summary.md`
+- **Outcome**: success
+- **Notes / next action**: longer-horizon ranking flips to `w64` as best by FID; use `w64` as default in the next scaling stage, keep others as ablations.
+
+- **Run ID**: disk_cleanup_mae_variant_impacts-20260211-0132
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Objective**: reclaim space after MAE-variant impact runs while preserving evaluation/report artifacts.
+- **Key actions**:
+  - truncated superseded checkpoints to `0` bytes:
+    - short-run matrix checkpoints under `outputs/imagenet/latent_mae_variant_impact/{w64,w96,w64_clsft}/checkpoint.pt`
+    - long-run non-selected checkpoints under `outputs/imagenet/latent_mae_variant_impact_long100_s5k_cuda1/{w96,w64_clsft}/checkpoint.pt`
+    - aborted run checkpoint under `outputs/imagenet/latent_mae_variant_impact_long100_s5k/w64/checkpoint.pt`
+  - retained JSON summaries/evals/samples and the selected longer-horizon checkpoint (`w64`).
+- **Disk delta**:
+  - `/mnt/drive_4` free space increased from ~`345G` to ~`383G`
+- **Outcome**: success
+
+- **Run ID**: EXP-STAGE5-IMAGENET-LASTK-STEP300-400-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2_cuda1_step400_w64.yaml
+- **Hardware**: cuda:1
+- **Seed(s)**: 1337
+- **Objective**: Evaluate last-K step checkpoints with consistent sampling/eval settings
+- **Key toggles**: {"inception_weights": "pretrained", "k": 3, "mode": "latent", "n_samples": 2000, "reference_cache": false}
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_lastk_eval_k3_s2k/last_k_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_lastk_eval_k3_s2k/last_k_summary.md`
+- **Outcome**: success
+- **Notes / next action**: Post-run last-k evaluation after step-400 completion (k=3, 2000 samples/checkpoint).
+
+- **Run ID**: EXP-STAGE5-IMAGENET-ALPHA-SWEEP-STEP400-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2_cuda1_step400_w64.yaml
+- **Hardware**: cuda:1
+- **Seed(s)**: 1337
+- **Objective**: Sweep alpha values and record FID/IS per alpha
+- **Key toggles**: {"alphas": [1.0, 1.5, 2.0, 2.5, 3.0], "inception_weights": "pretrained", "mode": "latent", "n_samples": 2000, "reference_cache": false}
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_alpha_sweep_s2k/alpha_sweep_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_alpha_sweep_s2k/alpha_sweep_summary.md`
+- **Outcome**: success
+- **Notes / next action**: Post-run alpha sweep at step 400 (alphas 1.0..3.0, 2000 samples/alpha).
+
+- **Run ID**: EXP-STAGE5-IMAGENET-FIXED-SEED-GRIDS-STEP400-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/sample_fixed_seed_grids.py` + `configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2_cuda1_step400_w64.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: Produce fixed-seed qualitative trajectory grids across retained continuation checkpoints.
+- **Key toggles**: `max_checkpoints=3`, `alpha=1.5`, `grid_samples=16`, `decode=sd_vae@256`
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_fixed_seed_grids_postcleanup/fixed_seed_grid_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_fixed_seed_grids_postcleanup/grid_00000300.png`
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_fixed_seed_grids_postcleanup/grid_00000350.png`
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_fixed_seed_grids_postcleanup/grid_00000400.png`
+- **Outcome**: success
+- **Notes / next action**: grids now align with retained checkpoints after cleanup.
+
+- **Run ID**: EXP-STAGE5-IMAGENET-NN-AUDIT-STEP400-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/audit_nearest_neighbors.py` (alpha=1.5 branch images)
+- **Hardware**: `cuda:1`
+- **Seed(s)**: N/A (analysis utility)
+- **Objective**: Audit nearest-neighbor similarity/diversity for best-alpha step-400 samples.
+- **Key toggles**: `max_generated=512`, `max_reference=10000`, ResNet50 feature embeddings.
+- **Eval metrics summary**:
+  - `mean_cosine_similarity≈0.3413`
+  - `median_cosine_similarity≈0.3399`
+  - `p95_cosine_similarity≈0.3919`
+  - `label_match_rate≈0.0020`
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_alpha_sweep_s2k/alpha_1p5/nn_audit.json`
+- **Outcome**: success
+- **Notes / next action**: extend audit with larger reference pool if we scale sampling volume further.
+
+- **Run ID**: disk_cleanup_latent_ablation_b2_400-20260211-1958
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Objective**: reclaim space in the step-400 continuation run directory while preserving final evidence artifacts.
+- **Key actions**:
+  - removed redundant early continuation checkpoints:
+    - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64/checkpoints/checkpoint_step_00000150.pt`
+    - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64/checkpoints/checkpoint_step_00000200.pt`
+    - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64/checkpoints/checkpoint_step_00000250.pt`
+  - removed stale relaunch/supervisor debug files under:
+    - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64/`
+  - retained final checkpoints (`300/350/400`), `checkpoint.pt`, and all post-run eval summaries.
+- **Disk delta**:
+  - run dir reduced from ~`17G` to ~`9.4G`
+  - `/mnt/drive_4` free space increased from ~`364G` to ~`371G`
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_400_cuda1_w64_cleanup_20260211.md`
+- **Outcome**: success
+
+- **Run ID**: EXP-STAGE5-IMAGENET-BEST-STEP400-ALPHA1P5-S5K-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2_cuda1_step400_w64.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: Execute canonical best-checkpoint command pair (`step400`, `alpha=1.5`) with larger sample count.
+- **Key toggles**: `n_samples=5000`, `batch_size=32`, `decode=sd_vae@256`, pretrained Inception with cached ImageNet val reference stats.
+- **Eval metrics summary**:
+  - `FID≈289.55`
+  - `IS≈1.4762`
+- **Artifacts**:
+  - `outputs/imagenet/step400_best_alpha1p5_samples/sample_summary.json`
+  - `outputs/imagenet/step400_best_alpha1p5_eval/eval_pretrained.json`
+- **Outcome**: success
+- **Notes / next action**: use this pair as the default operating point for next incremental scaling/ablation passes.
+
+- **Run ID**: EXP-STAGE5-IMAGENET-ALT-STEP400-ALPHA3P0-S5K-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2_cuda1_step400_w64.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: Execute the IS-prioritized alternate operating point (`step400`, `alpha=3.0`) with matched protocol.
+- **Key toggles**: `n_samples=5000`, `batch_size=32`, `decode=sd_vae@256`, pretrained Inception with cached ImageNet val reference stats.
+- **Eval metrics summary**:
+  - `FID≈289.64`
+  - `IS≈1.4787`
+- **Comparison vs default (`alpha=1.5`, same protocol)**:
+  - `ΔFID≈+0.0891` (slightly worse FID)
+  - `ΔIS≈+0.0025` (slightly better IS)
+- **Artifacts**:
+  - `outputs/imagenet/step400_alt_alpha3p0_samples/sample_summary.json`
+  - `outputs/imagenet/step400_alt_alpha3p0_eval/eval_pretrained.json`
+- **Outcome**: success
+- **Notes / next action**: keep `alpha=1.5` as default for FID-first reporting; use `alpha=3.0` when IS is prioritized.
+
+- **Run ID**: EXP-STAGE1-TOY-DETERMINISM-AND-REGRESSION-20260211
+- **Date**: 2026-02-11
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/toy/quick.yaml`
+- **Hardware**: `cpu`
+- **Seed(s)**: 1337
+- **Objective**: close Stage-1 determinism + anti-symmetry artifact gates with hash-backed replay checks and regression guard output.
+- **Key toggles**: replay runs (`baseline`, `attraction_only`) executed twice each with identical config/seed/device; anti-symmetry suite executed with all ablations.
+- **Eval metrics summary**:
+  - deterministic replay equality:
+    - `baseline`: files identical + summary identical
+    - `attraction_only`: files identical + summary identical
+  - anti-symmetry delta:
+    - `attraction_only` mean-distance delta vs baseline: `+16.1323` (worse as expected)
+  - regression gate: `passed=true`
+- **Artifacts**:
+  - `outputs/toy_determinism/baseline_replay_compare.json`
+  - `outputs/toy_determinism/attraction_only_replay_compare.json`
+  - `outputs/toy_antisym_ablation/toy_results.json`
+  - `outputs/toy_antisym_ablation/summary.json`
+  - `outputs/toy_trajectory_grids/summary.json`
+  - `outputs/toy_regression/latest.json`
+- **Outcome**: success
+- **Notes / next action**: Stage-1 closure evidence now includes deterministic replay hashes, anti-symmetry deltas, and an executable regression threshold gate script.
+
+- **Run ID**: EXP-STAGE2-GENERATOR-STABILITY-120-CUDA1-20260212
+- **Date**: 2026-02-12
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/stage2_generator_stability_120.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: close Stage-2 stability gate with a longer short-horizon run under queue+feature-loss settings.
+- **Key toggles**: `steps=120`, `save-every=40`, `rmsnorm+qk-norm+rope`, `register_tokens=16`, queue enabled (`synthetic_dataset`), precision `bf16`.
+- **Train metrics summary**:
+  - final step: `loss=1.0000`, `mean_drift_norm≈6.4176`, `grad_norm≈0.2997`
+  - throughput: `mean_step_time_s≈6.4145`, `mean_generated_images_per_sec≈4.9922`
+  - queue integrity: `underflow_missing_labels=0`, `underflow_backfilled_samples=0`
+- **Artifacts**:
+  - `outputs/stage2_generator_stability_120/latent_summary.json`
+  - `outputs/stage2_generator_stability_120/checkpoints/checkpoint_step_00000040.pt`
+  - `outputs/stage2_generator_stability_120/checkpoints/checkpoint_step_00000080.pt`
+  - `outputs/stage2_generator_stability_120/checkpoints/checkpoint_step_00000120.pt`
+- **Outcome**: success
+- **Notes / next action**: proceed to targeted architecture toggles and overfit-mode sanity for Stage-2 closure evidence.
+
+- **Run ID**: EXP-STAGE2-GENERATOR-ARCH-ABLATION-CUDA1-20260212
+- **Date**: 2026-02-12
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: scripted matrix via `scripts/run_generator_arch_ablations.py` (20 steps/variant)
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: quantify Stage-2 architecture sensitivity across paper-relevant toggles (RoPE/QK-Norm/RMSNorm/style/register tokens).
+- **Key toggles**: variants = `baseline_table8_like`, `no_rope`, `no_qk_norm`, `layernorm`, `no_register_tokens`, `no_style_tokens`.
+- **Train metrics summary**:
+  - all 6 variants completed with finite final metrics (`finite_final_metrics=true`)
+  - mean step-time range: `~6.366s .. 6.469s`
+  - mean throughput range: `~4.952 .. 5.033 img/s`
+  - max peak VRAM range: `~3673 MB .. 3965 MB`
+  - drift signal shifted most when removing style/register tokens (`mean_drift_norm` highest in `no_style_tokens` / `no_register_tokens`)
+- **Artifacts**:
+  - `outputs/stage2_generator_arch_ablations_cuda1/generator_arch_ablation_summary.json`
+  - `outputs/stage2_generator_arch_ablations_cuda1/generator_arch_ablation_summary.md`
+  - `outputs/stage2_generator_arch_ablations_cuda1/baseline_table8_like/train/latent_summary.json`
+  - `outputs/stage2_generator_arch_ablations_cuda1/no_rope/train/latent_summary.json`
+  - `outputs/stage2_generator_arch_ablations_cuda1/no_qk_norm/train/latent_summary.json`
+  - `outputs/stage2_generator_arch_ablations_cuda1/layernorm/train/latent_summary.json`
+  - `outputs/stage2_generator_arch_ablations_cuda1/no_register_tokens/train/latent_summary.json`
+  - `outputs/stage2_generator_arch_ablations_cuda1/no_style_tokens/train/latent_summary.json`
+- **Outcome**: success
+- **Notes / next action**: keep `baseline_table8_like` as default; retain `no_style_tokens` and `no_register_tokens` as explicit ablation branches.
+
+- **Run ID**: EXP-STAGE2-TINY-OVERFIT-SANITY-CUDA1-20260212
+- **Date**: 2026-02-12
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/stage2_tiny_overfit.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: validate new tiny-set overfit mode and enforce an executable overfit sanity check artifact.
+- **Key toggles**: `overfit-fixed-batch=true`, `alpha-fixed=1.0`, `style_token_count=0`, `steps=120`, `use_queue=false`.
+- **Train metrics summary**:
+  - run remained finite and converged to near-zero loss (`final_loss=0.0`, `min_loss=0.0`)
+  - overfit check gate passed (`loss_threshold=1e-6`)
+- **Artifacts**:
+  - `outputs/stage2_tiny_overfit_cuda1/latent_summary.json`
+  - `outputs/stage2_tiny_overfit_cuda1/checkpoint.pt`
+  - `outputs/stage2_tiny_overfit_cuda1/overfit_check.json`
+- **Outcome**: success
+- **Notes / next action**: use this overfit profile as a fast sanity gate before longer Stage-2/Stage-5 architecture experiments.
+
+- **Run ID**: EXP-STAGE3-FEATURE-ABLATION-CHECK-CUDA1-20260212
+- **Date**: 2026-02-12
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: scripted matrix via `scripts/run_latent_ablations.py`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: script default seed path
+- **Objective**: verify Stage-3 feature-ablation runner remains healthy after Stage-2 changes.
+- **Key toggles**: 9 short variants (`temp_*`, `shared_norm_on/off`, `feature_ab/ac/ad`) under queue+feature-loss setup.
+- **Train metrics summary**:
+  - all 9 variants completed and summary artifacts were written
+  - throughput and drift deltas across temperature and feature-set switches remained finite
+- **Artifacts**:
+  - `outputs/stage3_feature_ablation_check_cuda1/latent_ablation_summary.json`
+  - `outputs/stage3_feature_ablation_check_cuda1/latent_ablation_summary.md`
+- **Outcome**: success
+- **Notes / next action**: use this output as the baseline scaffold for longer-horizon Stage-3 ablations.
+
+- **Run ID**: EXP-STAGE4-QUEUE-DETERMINISM-CHECK-CPU-20260212
+- **Date**: 2026-02-12
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: scripted check via `scripts/check_queue_determinism.py`
+- **Hardware**: `cpu`
+- **Seed(s)**: 1337
+- **Objective**: close Stage-4 queue determinism gate with a replayed fixed-seed queue warmup comparison.
+- **Key toggles**: two identical queue-enabled latent runs (`class_balanced` warmup, synthetic dataset).
+- **Eval metrics summary**:
+  - `warmup_equal=true`
+  - `underflow_equal=true`
+  - `manifest_fingerprint_equal=true`
+  - overall gate: `passed=true`
+- **Artifacts**:
+  - `outputs/stage4_queue_determinism/queue_determinism.json`
+- **Outcome**: success
+- **Notes / next action**: queue warmup path is deterministic in single-process mode for fixed seed/config.
+
+- **Run ID**: EXP-QUALITY-GATE-TARGETED-PYTEST-AND-DISK-SNAPSHOT-20260212
+- **Date**: 2026-02-12
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: targeted test suite + disk snapshot workflow
+- **Hardware**: mixed (`cpu` tests, status-only system checks)
+- **Seed(s)**: N/A
+- **Objective**: close QA gates for modified Stage-2/Stage-4 codepaths and capture disk/artifact status.
+- **Key toggles**:
+  - targeted tests: `tests/integration/test_checkpoint_resume.py`, `tests/integration/test_latent_no_style_tokens.py`, `tests/integration/test_latent_overfit_mode.py`, `tests/integration/test_sample_latent_config_guard.py`
+  - disk snapshot captured after run completion
+- **Eval metrics summary**:
+  - targeted pytest set: `6 passed`
+  - no active Stage-2 ablation/train runner processes at snapshot time
+- **Artifacts**:
+  - `docs/stage2_stage4_execution_snapshot_20260212.md`
+- **Outcome**: success
+- **Notes / next action**: proceed to next stage checklist items with Stage-2/Stage-4 gates recorded and verified.
+
+- **Run ID**: EXP-RESTART-RECOVERY-ENV-VALIDATION-20260212
+- **Date**: 2026-02-12
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: restart recovery workflow (`uv sync` + stack probes + targeted pytest)
+- **Hardware**: CUDA host (2x RTX 6000 Ada)
+- **Seed(s)**: N/A
+- **Objective**: restore execution readiness after machine reboot and verify no drift in environment/toolchain.
+- **Key toggles**:
+  - `uv sync --extra dev --extra sdvae --extra imagenet`
+  - torch/CUDA/diffusers import probes
+  - targeted tests: `test_latent_no_style_tokens`, `test_latent_overfit_mode`
+- **Eval metrics summary**:
+  - torch stack healthy (`torch 2.10.0+cu128`, CUDA visible on 2 GPUs)
+  - targeted restart checks passed (`3 passed`)
+- **Artifacts**:
+  - existing stage artifacts revalidated in place:
+    - `outputs/stage2_generator_stability_120/latent_summary.json`
+    - `outputs/stage2_generator_arch_ablations_cuda1/generator_arch_ablation_summary.json`
+    - `outputs/stage4_queue_determinism/queue_determinism.json`
+- **Outcome**: success
+- **Notes / next action**: proceed with Stage-5 scale-readiness execution on `cuda:1`.
+
+- **Run ID**: EXP-STAGE5-TABLE8-LATENT-PROXY-BENCHMARK-RESTART-20260212
+- **Date**: 2026-02-12
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**:
+  - `configs/latent/imagenet1k_sdvae_latents_table8_b2_template.yaml`
+  - `configs/latent/imagenet1k_sdvae_latents_table8_l2_template.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: run post-restart Stage-5 scale-readiness proxy benchmark for Table-8 latent configs.
+- **Key toggles**: `bench_steps=8`, proxy batch `groups=4, neg=4, pos=4, unc=2`, queue-backed tensor shards.
+- **Eval metrics summary**:
+  - `b2_template`: `mean_step_time_s≈3.5066`, `img_per_sec≈5.0781`, `peak_cuda_mem_mb≈7632.67`
+  - `l2_template`: `mean_step_time_s≈3.0938`, `img_per_sec≈5.1850`, `peak_cuda_mem_mb≈22789.50`
+  - both runs returned `returncode=0`
+- **Artifacts**:
+  - `outputs/imagenet/benchmarks/table8_latent_proxy_20260212_restart/table8_latent_benchmark_summary.json`
+  - `outputs/imagenet/benchmarks/table8_latent_proxy_20260212_restart/table8_latent_benchmark_summary.md`
+- **Outcome**: success
+- **Notes / next action**: use these proxy numbers to set safe launch envelopes for the next longer-horizon latent scaling runs.
+
+- **Run ID**: EXP-STAGE5-STEP600-LASTK-K4-S2K-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2_cuda1_step600_w64.yaml
+- **Hardware**: cuda:1
+- **Seed(s)**: 1337
+- **Objective**: Evaluate last-K step checkpoints with consistent sampling/eval settings
+- **Key toggles**: {"inception_weights": "pretrained", "k": 4, "mode": "latent", "n_samples": 2000, "reference_cache": false}
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_lastk_eval_k4_s2k/last_k_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_lastk_eval_k4_s2k/last_k_summary.md`
+- **Outcome**: success
+- **Notes / next action**: checkpoint trend was non-monotonic (best FID at step 550, degradation by step 600); keep step 550 as current candidate for follow-up alpha diagnostics.
+
+- **Run ID**: EXP-STAGE5-STEP600-ALPHA-SWEEP-S2K-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2_cuda1_step600_w64.yaml
+- **Hardware**: cuda:1
+- **Seed(s)**: 1337
+- **Objective**: Sweep alpha values and record FID/IS per alpha
+- **Key toggles**: {"alphas": [1.0, 1.5, 2.0, 2.5, 3.0], "inception_weights": "pretrained", "mode": "latent", "n_samples": 2000, "reference_cache": false}
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_alpha_sweep_s2k/alpha_sweep_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_alpha_sweep_s2k/alpha_sweep_summary.md`
+- **Outcome**: success
+- **Notes / next action**: alpha sweep remained effectively flat and low-quality at step 600 (best FID at alpha=3.0 but delta negligible); prioritize checkpoint-quality improvements over alpha retuning.
+
+- **Run ID**: EXP-STAGE5-STEP600-FIXED-SEED-GRIDS-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2_cuda1_step600_w64.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: generate fixed-seed qualitative grids across final step-600 checkpoints for trajectory inspection.
+- **Key toggles**: `k=4 checkpoints (450/500/550/600)`, `alpha=1.5`, `grid_samples=16`, `decode=sd_vae@256`.
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_fixed_seed_grids/fixed_seed_grid_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_fixed_seed_grids/grid_00000450.png`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_fixed_seed_grids/grid_00000500.png`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_fixed_seed_grids/grid_00000550.png`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_fixed_seed_grids/grid_00000600.png`
+- **Outcome**: success
+- **Notes / next action**: compare row-level sample diversity and artifact drift against the better quantitative checkpoint (`step 550`) before launching longer-horizon training.
+
+- **Run ID**: EXP-STAGE5-STEP600-NN-AUDIT-A1P5-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `checkpoint=outputs/imagenet/latent_ablation_b2_600_cuda1_w64/checkpoint.pt`, `generated_root=alpha_1p5/samples/images`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: N/A (analysis-only)
+- **Objective**: audit nearest-neighbor similarity of step-600 generated samples against ImageNet val for memorization risk.
+- **Key toggles**: `max_generated=512`, `max_reference=10000`, `embedding=CLIP image encoder`.
+- **Eval metrics summary**:
+  - `mean_cosine_similarity=0.2806`
+  - `median_cosine_similarity=0.2778`
+  - `p95_cosine_similarity=0.3090`
+  - `label_match_rate=0.0059`
+- **Artifacts**:
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_alpha_sweep_s2k/alpha_1p5/nn_audit.json`
+- **Outcome**: success
+- **Notes / next action**: similarity profile is low (no high-memorization signal at this scale), but sample quality remains poor; prioritize training dynamics over anti-memorization interventions.
+
+- **Run ID**: EXP-DISK-CLEANUP-BENCHMARK-CHECKPOINT-PRUNE-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: N/A (artifact lifecycle operation)
+- **Hardware**: host filesystem (`/mnt/drive_4`)
+- **Seed(s)**: N/A
+- **Objective**: recover disk headroom while preserving benchmark evidence.
+- **Key toggles**: removed only benchmark `checkpoint.pt` files from 8-step proxy runs; retained all benchmark summaries.
+- **Artifacts**:
+  - `outputs/imagenet/cleanup_20260213_benchmark_checkpoint_prune.md`
+  - `outputs/imagenet/benchmarks/table8_latent_proxy_20260212_restart/table8_latent_benchmark_summary.json`
+  - `outputs/imagenet/benchmarks/table8_latent_proxy_gpu/table8_latent_benchmark_summary.json`
+- **Outcome**: success
+- **Notes / next action**: reclaimed ~21G (`/mnt/drive_4` free space ~344G -> 365G); continue pruning non-essential large checkpoints after each benchmark pass.
+
+- **Run ID**: EXP-STAGE5-RECOVERY550-STEP700-ALPHA-SWEEP-S2K-RERUN-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: configs/latent/imagenet1k_sdvae_latents_recovery_from550_cuda1_step700_w64.yaml
+- **Hardware**: cuda:1
+- **Seed(s)**: 1337
+- **Objective**: Sweep alpha values and record FID/IS per alpha
+- **Key toggles**: {"alphas": [1.0, 1.5, 2.0, 2.5, 3.0], "inception_weights": "pretrained", "mode": "latent", "n_samples": 2000, "reference_cache": false}
+- **Artifacts**:
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_alpha_sweep_s2k_rerun/alpha_sweep_summary.json`
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_alpha_sweep_s2k_rerun/alpha_sweep_summary.md`
+- **Outcome**: success
+- **Notes / next action**: rerun against immutable checkpoint_step_00000700.pt to avoid the earlier checkpoint write/read race; sweep remained flat and low-quality (best FID at alpha=1.0).
+
+- **Run ID**: EXP-STAGE5-RECOVERY550-STEP700-TRAIN-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/imagenet1k_sdvae_latents_recovery_from550_cuda1_step700_w64.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: continue from `step=550` to `step=700` and test whether late-stage collapse can be mitigated with a conservative schedule.
+- **Key toggles**: resumed from `checkpoint_step_00000550.pt` with `--allow-resume-config-mismatch`; queue+MAE feature loss remained enabled.
+- **Train metrics summary**:
+  - `resume_step=550`, terminal `step=700`
+  - `mean_step_time_s≈6.90`, `img_per_sec≈9.55`, `peak_vram≈23.70 GB`
+  - terminal log: `lr=2.0e-4`, `grad_norm≈1.41`, `mean_drift_norm≈11.84`
+- **Artifacts**:
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64/latent_summary.json`
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64/checkpoints/checkpoint_step_00000700.pt`
+- **Outcome**: success
+- **Notes / next action**: training completed cleanly, but optimizer LR remained inherited (`2e-4`) despite config (`8e-5`) because optimizer state was restored; use the new `--resume-model-only` path for true optimizer-reset ablations.
+
+- **Run ID**: EXP-STAGE5-RECOVERY550-STEP700-NN-AUDIT-A1P5-RERUN-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `checkpoint=checkpoint_step_00000700.pt`, `generated_root=.../alpha_1p5/samples/images`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: N/A (analysis-only)
+- **Objective**: nearest-neighbor audit for the recovery run’s rerun sweep branch (`alpha=1.5`).
+- **Key toggles**: `max_generated=512`, `max_reference=10000`, `embedding=CLIP image encoder`.
+- **Eval metrics summary**:
+  - `mean_cosine_similarity=0.3274`
+  - `median_cosine_similarity=0.3276`
+  - `p95_cosine_similarity=0.3342`
+  - `label_match_rate=0.0078`
+- **Artifacts**:
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_alpha_sweep_s2k_rerun/alpha_1p5/nn_audit.json`
+- **Outcome**: success
+- **Notes / next action**: duplicate-risk signal remains low at this audit scale; primary bottleneck remains generative quality, not memorization.
+
+- **Run ID**: EXP-TRAIN-LATENT-RESUME-MODEL-ONLY-REGRESSION-TESTS-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/train_latent.py` resume path update + integration tests
+- **Hardware**: `cpu`
+- **Seed(s)**: N/A
+- **Objective**: validate new `--resume-model-only` execution mode for optimizer-reset ablations.
+- **Key toggles**: targeted tests `test_checkpoint_resume.py`, `test_resume_mismatch_guard.py`.
+- **Eval metrics summary**:
+  - `3 passed in 10.00s`
+- **Artifacts**:
+  - `tests/integration/test_checkpoint_resume.py`
+  - `scripts/train_latent.py`
+- **Outcome**: success
+- **Notes / next action**: use `--resume-model-only` for the second recovery branch so configured LR/scheduler are actually applied.
+
+- **Run ID**: EXP-STAGE5-RECOVERY550-STEP700-MODELONLY-ALPHA-SWEEP-S2K-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: configs/latent/imagenet1k_sdvae_latents_recovery_from550_cuda1_step700_w64.yaml
+- **Hardware**: cuda:1
+- **Seed(s)**: 1337
+- **Objective**: Sweep alpha values and record FID/IS per alpha
+- **Key toggles**: {"alphas": [1.0, 1.5, 2.0, 2.5, 3.0], "inception_weights": "pretrained", "mode": "latent", "n_samples": 2000, "reference_cache": false}
+- **Artifacts**:
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_modelonly_alpha_sweep_s2k/alpha_sweep_summary.json`
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_modelonly_alpha_sweep_s2k/alpha_sweep_summary.md`
+- **Outcome**: success
+- **Notes / next action**: optimizer-reset continuation (resume-model-only) improved FID materially vs optimizer-restored recovery branch; alpha trend remains nearly flat with tiny deltas.
+
+- **Run ID**: EXP-STAGE5-RECOVERY550-STEP700-MODELONLY-TRAIN-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `configs/latent/imagenet1k_sdvae_latents_recovery_from550_cuda1_step700_w64.yaml`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: 1337
+- **Objective**: isolate optimizer-state effects by resuming from `step=550` with model-only state restore.
+- **Key toggles**: `--resume-model-only`, `--allow-resume-config-mismatch`, queue+MAE feature loss enabled.
+- **Train metrics summary**:
+  - `resume_step=550`, terminal `step=700`
+  - terminal log: `lr=8.0e-5`, `grad_norm≈0.563`, `mean_drift_norm≈12.293`
+  - `mean_step_time_s≈6.25`, `img_per_sec≈10.24`, `peak_vram≈22.47 GB`
+- **Artifacts**:
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_modelonly/latent_summary.json`
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_modelonly/checkpoints/checkpoint_step_00000700.pt`
+- **Outcome**: success
+- **Notes / next action**: optimizer reset was applied as intended (`lr` stayed at `8e-5`); compare resulting FID/IS against optimizer-restored recovery branch to isolate optimization-state contribution.
+
+- **Run ID**: EXP-STAGE5-RECOVERY550-STEP700-MODELONLY-NN-AUDIT-A1P5-CUDA1-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `checkpoint=checkpoint_step_00000700.pt`, `generated_root=.../modelonly_alpha_sweep_s2k/alpha_1p5/samples/images`
+- **Hardware**: `cuda:1`
+- **Seed(s)**: N/A (analysis-only)
+- **Objective**: nearest-neighbor audit for optimizer-reset recovery branch (`alpha=1.5`).
+- **Key toggles**: `max_generated=512`, `max_reference=10000`, `embedding=CLIP image encoder`.
+- **Eval metrics summary**:
+  - `mean_cosine_similarity=0.1914`
+  - `median_cosine_similarity=0.1897`
+  - `p95_cosine_similarity=0.2052`
+  - `label_match_rate=0.0020`
+- **Artifacts**:
+  - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_modelonly_alpha_sweep_s2k/alpha_1p5/nn_audit.json`
+- **Outcome**: success
+- **Notes / next action**: similarity statistics dropped substantially relative to optimizer-restored branch; no memorization warning signal at this audit scale.
+
+- **Run ID**: EXP-STAGE5-POSTRUN-AUTO-CHAIN-GENERALIZATION-20260213
+- **Date**: 2026-02-13
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: `scripts/run_latent_alpha_nn_chain.sh`
+- **Hardware**: N/A (runner utility)
+- **Seed(s)**: N/A
+- **Objective**: standardize post-run alpha sweep + NN audit chaining with immutable checkpoint gating.
+- **Key toggles**: required args (`checkpoint`, `config`, `output_root`, `device`); waits for immutable checkpoint path.
+- **Artifacts**:
+  - `scripts/run_latent_alpha_nn_chain.sh`
+  - `docs/imagenet_step550_modelonly_recovery_commands.md`
+- **Outcome**: success
+- **Notes / next action**: use this chain wrapper for all long-horizon latent runs to avoid mutable-checkpoint race failures.
+
+- **Run ID**: EXP-STAGE6-MAE-RESNETUNET-DOWNSTREAM-LATENT-SMOKE-CUDA0-20260217
+- **Date**: 2026-02-17
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: CLI args in `scripts/train_latent.py` (`resolved_config_hash=ff55dca5a4c655fa916ea9e1fa9409f2d2439f65a3ce4cf4726538f7a8d2c98a`)
+- **Hardware**: `cuda:0` (co-scheduled with ongoing long-horizon run)
+- **Seed(s)**: 1337
+- **Objective**: verify regenerated `resnet_unet` MAE export works as feature encoder in a real ImageNet tensor-shard latent training smoke run.
+- **Key toggles**: `feature_encoder=mae`, `mae_encoder_arch=resnet_unet`, `mae_encoder_path=outputs/imagenet/mae_variant_a_w64/mae_encoder.pt`, `real_batch_source=tensor_shards`, reduced smoke geometry (`groups=2`, `neg=2`, `pos=2`, `steps=12`) to avoid contention with active long run.
+- **Train metrics summary**:
+  - run completed cleanly with finite metrics through step 12.
+  - terminal log: `loss≈1.0000001`, `grad_norm≈3.6545`, `mean_drift_norm≈10.5234`
+  - `mean_step_time_s≈2.86`, `img_per_sec≈1.41`, `peak_vram≈367.76 MB`
+  - `alpha_mean_over_steps≈1.3803` (`min=1.0`, `max≈2.2704`)
+  - queue underflow totals: `missing_labels=22`, `backfilled_samples=22`
+- **Dataset/provider summary**:
+  - manifest fingerprint: `4f6b97284b8cd2f3052328527e627112baac1a977c502822ce723800ba42733b`
+  - provider sanity: 2 sampled batches, 32 samples, labels observed in classes `[335..343]`.
+- **Artifacts**:
+  - `outputs/imagenet/latent_smoke_mae_resnetunet_gpu0_20260217_r2/latent_summary.json`
+  - `outputs/imagenet/latent_smoke_mae_resnetunet_gpu0_20260217_r2/checkpoint.pt`
+  - `outputs/imagenet/latent_smoke_mae_resnetunet_gpu0_20260217_r2/RUN.md`
+- **Outcome**: success
+- **Notes / next action**: the earlier grouped-dimension failure was caused by mismatched latent geometry (`image_size=16` against 32x32 shard latents); keep ImageNet tensor-shard runs pinned to `image_size=32`, `channels=4`, and compatible grouping/batching defaults.
+
+- **Run ID**: EXP-STAGE6-MAE-RESNETUNET-DOWNSTREAM-SAMPLE-EVAL-CUDA0-20260217
+- **Date**: 2026-02-17
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: sample/eval CLI from `scripts/sample_latent.py` + `scripts/eval_fid_is.py`; source checkpoint `sha256=63c259644f1d4f97f8b08294dd70cac5515109f9dd7ab2df2885834ec0c3ea7e`
+- **Hardware**: `cuda:0` (co-scheduled with ongoing long-horizon training)
+- **Seed(s)**: 1337
+- **Objective**: run paired sample+eval from the new resnet_unet-MAE smoke checkpoint and verify end-to-end decode/eval compatibility.
+- **Key toggles**:
+  - sampling: `n_samples=512`, `batch_size=8`, `alpha=1.0`, `decode_mode=sd_vae`, `decode_image_size=256`
+  - SD-VAE: `stabilityai/sd-vae-ft-mse@31f26fdeee1355a5c34592e401dd41e45d25a493`
+  - eval: pretrained Inception, loaded cached ImageNet val stats (`outputs/datasets/imagenet1k_val_reference_stats_pretrained.pt`)
+- **Eval metrics summary**:
+  - `FID=316.1279`
+  - `IS=1.0899 ± 0.0072`
+  - `generated_samples=512`, `reference_samples=50000`
+- **Artifacts**:
+  - `outputs/imagenet/latent_smoke_mae_resnetunet_gpu0_20260217_r2_samples_20260217_170443/sample_summary.json`
+  - `outputs/imagenet/latent_smoke_mae_resnetunet_gpu0_20260217_r2_eval_20260217_170443/eval_pretrained.json`
+  - `outputs/imagenet/latent_smoke_mae_resnetunet_gpu0_20260217_r2_samples_20260217_170443/images`
+- **Outcome**: success
+- **Notes / next action**: this is a low-sample smoke evaluation and is not directly comparable to 5k-sample reports; rerun at `n_samples=5000` when GPU lane is free for stable ranking against prior checkpoints.
+
+- **Run ID**: EXP-STAGE4-SIGNAL-LADDER-RUNGS1-3-20260219
+- **Date**: 2026-02-19
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: mixed (`cpu` checks + `cuda` benchmarks)
+- **Objective**: execute the D2 fast signal ladder rungs 1–3 with explicit pass/fail criteria and artifactized outcomes.
+- **Pass/fail criteria**:
+  - Rung 1: queue determinism pass + feature reduction scaling pass.
+  - Rung 2: normalization A/B sensitivity pass + x² toggle effect pass.
+  - Rung 3: throughput speedup > 1x and proxy-quality drift parity (`max_abs_diff < 1e-4`).
+  - Rung 4 (mini-long run + scheduled proxy eval): pending.
+- **Artifacts**:
+  - `outputs/stage4_queue_determinism/queue_determinism.json`
+  - `outputs/stage4_reduction_scaling/reduction_scaling_check.json`
+  - `outputs/stage4_normalization_ab/normalization_ab_check.json`
+  - `outputs/stage4_x2_toggle/x2_toggle_check.json`
+  - `outputs/benchmarks/feature_drift_temperature_reuse/p2_temperature_reuse_baseline.json`
+  - `outputs/benchmarks/feature_drift_temperature_reuse/p2_temperature_reuse_no_xnorm.json`
+  - `outputs/stage4_signal_ladder/rung_summary.json`
+- **Outcome**: partial success (`rung1..3=pass`, `rung4=pending`)
+- **Notes / next action**: launch rung4 as a controlled mini-long run with corrected semantics and scheduled proxy eval hook.
+
+- **Run ID**: EXP-STAGE4-SIGNAL-LADDER-RUNG4-PROBE-20260219
+- **Date**: 2026-02-19
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` (timed probe run)
+- **Objective**: validate rung4 command path and collect early-horizon stability signal before full 10k execution.
+- **Command**:
+  - `timeout 120s uv run python scripts/train_latent.py --config configs/latent/rung4_mini_long_protocol.yaml --output-dir outputs/stage4_mini_long_run --checkpoint-dir outputs/stage4_mini_long_run/checkpoints`
+- **Observed progress**:
+  - logged through `step=400` with finite loss/drift metrics
+  - timeout exit (`code=124`) before first checkpoint boundary (`save-every=500`)
+- **Artifacts**:
+  - `configs/latent/rung4_mini_long_protocol.yaml`
+  - `docs/rung4_mini_long_run_protocol.md`
+  - `outputs/stage4_mini_long_run/rung4_probe_status.json`
+- **Outcome**: in-progress (full rung4 gate not yet satisfied)
+- **Notes / next action**: execute the same command without timeout to completion (`step=10000`), then run scheduled proxy eval on immutable checkpoints.
+
+- **Run ID**: EXP-STAGE4-PREPARITY-BASELINE-FREEZE-20260219
+- **Date**: 2026-02-19
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cuda:0` (single active training lane)
+- **Objective**: freeze and archive the active long-horizon run as an explicit **pre-parity** baseline per P2 section 2.1 policy.
+- **Freeze point**:
+  - immutable checkpoint: `outputs/imagenet/paperscale_b2_closest_feasible_run_20260215_005727/checkpoints/checkpoint_step_00029000.pt`
+  - latest mutable checkpoint snapshot: `outputs/imagenet/paperscale_b2_closest_feasible_run_20260215_005727/checkpoint.pt`
+- **Artifacts**:
+  - archive manifest: `outputs/baselines/pre_parity_b2_20260219_144046/artifacts_manifest.md`
+  - archive log tail: `outputs/baselines/pre_parity_b2_20260219_144046/train_log_tail.txt`
+  - pre-parity marker: `outputs/imagenet/paperscale_b2_closest_feasible_run_20260215_005727/PRE_PARITY_BASELINE.md`
+- **Outcome**: success (baseline preserved and labeled)
+- **Notes / next action**: keep this run paused; do not resume as faithfulness evidence until D2 rung4 and restart gates are completed.
+
+- **Run ID**: EXP-STAGE4-SIGNAL-LADDER-RUNG4-COMPLETE-20260219
+- **Date**: 2026-02-19
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cuda:0`
+- **Objective**: complete D2 rung4 gate: run corrected-semantics mini-long horizon to step `10000` and execute scheduled proxy eval at steps `2000`, `5000`, `10000`.
+- **Train summary**:
+  - last logged step: `10000`
+  - finite loss progression maintained through completion
+  - mean step time: `~0.1693s`; generated images/sec: `~99.21`
+- **Proxy eval summary**:
+  - evaluated checkpoints: `2000`, `5000`, `10000`
+  - each eval artifact present under `proxy_eval/step_*`
+  - note: used `inception_weights=none` + tensor-file reference smoke, so values are **protocol-smoke only** (not paper-comparable quality metrics).
+- **Artifacts**:
+  - `outputs/stage4_mini_long_run_20260219_144207/latent_summary.json`
+  - `outputs/stage4_mini_long_run_20260219_144207/proxy_eval`
+  - `outputs/stage4_signal_ladder/rung4_completion.json`
+  - `outputs/stage4_signal_ladder/rung_summary.json`
+- **Outcome**: success (`rung4=pass`; all D2 rungs now passed)
+- **Notes / next action**: proceed to restart-decision gate and update plan closure checkboxes before resuming long-horizon faithful run.
+
+- **Run ID**: EXP-STAGE4-LONGRUN-RESTART-CORRECTED-20260219
+- **Date**: 2026-02-19
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cuda:0`
+- **Objective**: execute phase-4 restart gate by launching the paused long-horizon lane with corrected semantics/perf toggles.
+- **Resume source**:
+  - baseline checkpoint: `outputs/imagenet/paperscale_b2_closest_feasible_run_20260215_005727/checkpoints/checkpoint_step_00029000.pt`
+  - restart checkpoint copy: `outputs/imagenet/paperscale_b2_corrected_restart_20260219_151538/checkpoint.pt`
+- **Restart config overrides**:
+  - `include-input-x2-mean: true`
+  - `feature-loss-term-reduction: sum`
+  - `compile-generator: true`
+  - `feature-compile-drift-kernel: true`
+  - compile fail-actions set to `warn` for rollback safety
+- **Artifacts**:
+  - `outputs/imagenet/paperscale_b2_corrected_restart_20260219_151538/config.yaml`
+  - `outputs/imagenet/paperscale_b2_corrected_restart_20260219_151538/train.log`
+  - `outputs/imagenet/paperscale_b2_corrected_restart_latest.txt`
+- **Outcome**: in-progress (run launched; monitoring active)
+- **Notes / next action**: verify first post-restart logged checkpoint and then proceed with standard long-run monitoring/eval cadence.
+
+- **Run ID**: EXP-STAGE4-LONGRUN-RESTART-CORRECTED-R2-20260219
+- **Date**: 2026-02-19
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cuda:0`
+- **Objective**: relaunch corrected long-horizon restart with stable compile scope after observing heavy compile churn in the first restart attempt.
+- **Issue observed in first restart**:
+  - repeated Dynamo recompilation warnings on drift-kernel compile path (`_compute_weighted_drifts_slot_batched_multi_temperature`)
+  - first-step wall time inflated (`~64s`) and poor immediate throughput
+- **Mitigation applied**:
+  - disabled drift-kernel compile for restart lane (`feature-compile-drift-kernel: false`)
+  - kept generator-forward compile enabled (`compile-generator: true`)
+- **Relaunch artifacts**:
+  - `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/config.yaml`
+  - `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/train.log`
+  - `outputs/imagenet/paperscale_b2_corrected_restart_latest.txt`
+- **Outcome**: in-progress (relaunch active; warmup stabilized)
+- **Post-launch verification**:
+  - reached `step=50` with `dt~3.164s` and no immediate compile-churn warning burst
+- **Notes / next action**: continue monitoring toward next immutable checkpoint boundary.
+
+- **Run ID**: EXP-P3-F0-MAE-PAPER-ARCH-TAPS-IMPLEMENTATION-20260219
+- **Date**: 2026-02-19
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` (test validation lane)
+- **Objective**: implement and validate P3 faithfulness F0 changes for MAE architecture/tap semantics and training-script wiring.
+- **Implemented changes**:
+  - added `paper_resnet34_unet` path in `drifting_models/features/mae.py` with ResNet-34 stage layout `[3,4,6,3]`, GN+ReLU blocks, bilinear-upsample + concat-skip decoder stages, and `encode_feature_taps()`.
+  - routed MAE feature extraction through tap API (`encode_feature_taps`) for latent/pixel trainer adapters.
+  - extended MAE arch CLI choices to include `paper_resnet34_unet` in `scripts/train_mae.py`, `scripts/train_latent.py`, and `scripts/train_pixel.py`.
+  - updated MAE export/load encoder key handling to include paper-arch prefixes (`paper_stem.*`, `paper_encoder_stages.*`).
+  - aligned DEC-0023 wording with current faithful default aggregation semantics.
+  - updated faithful Table-8 templates + contract test to pin `mae-encoder-arch: paper_resnet34_unet`.
+- **Validation commands**:
+  - `uv run pytest -q tests/unit/test_mae_feature_encoder.py tests/unit/test_paper_mae_arch.py tests/unit/test_table8_faithful_config_contract.py tests/integration/test_latent_mae_encoder_load.py tests/integration/test_pixel_mae_encoder_load.py tests/integration/test_pixel_mae_encoder_mismatch.py tests/integration/test_mae_resume_export.py tests/integration/test_mae_cls_ft_export.py tests/integration/test_mae_smoke.py`
+- **Outcome**: success (`21 passed`)
+- **Artifacts**:
+  - `docs_tmp/refinement/P3_REFINEMENT_MASTER_PLAN.md`
+  - `tests/unit/test_paper_mae_arch.py`
+  - updated configs/tests/scripts listed above
+- **Notes / next action**: proceed to remaining P3 F1/F2 items (queue strict-mode claim gate, reproduction-report/paper-map updates, and evidence gate definitions).
+
+- **Run ID**: EXP-P3-F1F2-QUEUE-STRICT-EVIDENCE-GATE-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` (test validation lane)
+- **Objective**: close remaining P3 F1/F2 items by adding strict queue no-replacement guardrails, extending faithfulness contracts/docs, and validating end-to-end.
+- **Implemented changes**:
+  - added strict queue mode (`QueueConfig.strict_without_replacement`) with fail-fast underfill behavior in `drifting_models/data/queue.py`.
+  - added CLI/summary wiring for `--queue-strict-without-replacement` in `scripts/train_latent.py` and `scripts/train_pixel.py`.
+  - strengthened queue underflow backfill to support required per-class counts (`required_count`) before grouped sampling in strict mode.
+  - pinned faithful Table-8 latent templates to `queue-strict-without-replacement: true`; documented closest-feasible temporary exceptions with explicit rationale.
+  - added faithfulness evidence policy doc and release-gate link:
+    - `docs/faithfulness_evidence_requirements.md`
+    - `docs/release_gate_checklist.md`
+  - updated claim maps/reporting:
+    - `docs/reproduction_report.md`
+    - `docs/paper_to_code_map.md`
+    - `docs/table8_config_map.md`
+    - `docs/decision_log.md` (DEC-0037)
+- **Validation commands**:
+  - `uv run pytest -q tests/unit/test_data_queue.py tests/unit/test_queue_label_integrity.py tests/unit/test_table8_faithful_config_contract.py tests/integration/test_queue_strict_mode.py tests/unit/test_paper_mae_arch.py tests/integration/test_latent_mae_encoder_load.py tests/integration/test_pixel_mae_encoder_load.py tests/integration/test_pixel_mae_encoder_mismatch.py`
+- **Outcome**: success (`37 passed`)
+- **Artifacts**:
+  - `docs_tmp/refinement/P3_REFINEMENT_MASTER_PLAN.md`
+  - `docs/faithfulness_evidence_requirements.md`
+  - queue strict-mode tests and docs listed above
+- **Notes / next action**: remaining faithfulness closure now depends on long-horizon evidence runs and release-gate artifact completion, not unresolved F0/F1 semantics.
+
+- **Run ID**: EXP-P3-STRICT-LONGRUN-CONFIG-ENFORCEMENT-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` (config/test lane)
+- **Objective**: enforce strict queue no-replacement expectations in active long-run launch configs and add a parity-readiness checklist artifact.
+- **Implemented changes**:
+  - pinned `queue-strict-without-replacement: true` in active long-run latent configs:
+    - `configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2*.yaml`
+    - `configs/latent/imagenet1k_sdvae_latents_recovery_from550*_w64.yaml`
+    - `configs/latent/longrun_feature_queue.yaml`
+    - `configs/latent/rung4_mini_long_protocol.yaml`
+  - added config guardrail tests:
+    - `tests/unit/test_longrun_queue_strict_contract.py`
+  - generated parity-readiness checklist artifact:
+    - `docs_tmp/refinement/P3_PARITY_READINESS_CHECKLIST.md`
+- **Validation commands**:
+  - `uv run pytest -q tests/unit/test_longrun_queue_strict_contract.py tests/unit/test_data_queue.py tests/unit/test_queue_label_integrity.py tests/integration/test_queue_strict_mode.py tests/unit/test_table8_faithful_config_contract.py tests/integration/test_queue_warmup.py tests/integration/test_queue_underflow_backfill.py`
+- **Outcome**: success (`30 passed`)
+- **Notes / next action**: use the new checklist as the operational gate for resuming/reporting long-horizon parity runs; keep closest-feasible exception explicit and isolated.
+
+- **Run ID**: EXP-OPS-ACTIVE-RUN-REGISTRY-REFRESH-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cuda` active long-run lane + `cpu` monitoring lane
+- **Objective**: refresh the active-run registry and capture current state before executing the final 100%-closure checklist.
+- **Active training lane**:
+  - run dir: `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045`
+  - process: `scripts/train_latent.py --config outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/config.yaml`
+  - latest observed progress: `step=10350/200000`
+  - latest immutable checkpoints: `checkpoint_step_00009000.pt`, `checkpoint_step_00010000.pt`
+  - recent runtime envelope: `dt≈2.7..3.4s`, `img/s≈37..47`, `peak≈2786..2787 MiB`
+- **Session registry snapshot**:
+  - tmux sessions observed: `drift_latent_b2_restart`, `drifting_models`, `crashmon`, `crash_investigation`, `nested_learning`, `thesis_work`, `thesis_work_2`, `frp_hetzner`
+- **Outcome**: success (registry refreshed and logged)
+- **Notes / next action**: continue Gate-0 environment/policy checks and provenance closure while the long-run lane advances.
+
+- **Run ID**: EXP-OPS-DISK-HEADROOM-VERIFY-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: host filesystem (`/mnt/drive_4`)
+- **Objective**: verify current disk headroom against the documented ImageNet latent comfortable floor before continuing long-horizon execution.
+- **Policy reference**:
+  - `docs/disk_requirements.md` (ImageNet-1k latent pipeline comfortable free space: `300–500 GB`)
+- **Observed snapshot**:
+  - available: `345,488,650,240` bytes (`~321.8 GiB`)
+  - usage: `91%`
+  - policy pass (`>=300 GiB free`): `true`
+- **Artifacts**:
+  - `outputs/ops/disk_headroom_snapshot_20260220_001005.json`
+  - `outputs/ops/disk_headroom_snapshot_20260220_001005.md`
+- **Outcome**: success (headroom policy currently satisfied)
+- **Notes / next action**: continue checkpoint pruning cadence to keep free space above the 300 GiB floor during long-run accumulation.
+
+- **Run ID**: EXP-OPS-ENV-GPU-FINGERPRINT-VERIFY-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cuda` host (`NVIDIA RTX 6000 Ada`, single visible GPU)
+- **Objective**: verify `uv` environment/lock integrity, validate GPU routing policy for this host, and capture pre-run environment/codebase fingerprints.
+- **Environment integrity**:
+  - `uv sync --frozen --extra dev --extra sdvae --extra imagenet` passed
+  - runtime stack observed: `torch=2.10.0+cu128`, `torchvision=0.25.0+cu128`, `torchaudio=2.10.0+cu128`
+  - artifact: `outputs/ops/uv_env_integrity_20260220_001037.json`
+- **GPU routing policy check**:
+  - visible GPU count: `1`
+  - active long-run config device: `cuda:0`
+  - policy result: pass (`single-GPU host -> cuda:0 pin`)
+  - artifact: `outputs/ops/gpu_routing_policy_20260220_001115.json`
+- **Pre-run fingerprints**:
+  - `outputs/ops/pre_run_fingerprints_20260220_001123/env_snapshot.json`
+  - `outputs/ops/pre_run_fingerprints_20260220_001123/env_fingerprint.json`
+  - `outputs/ops/pre_run_fingerprints_20260220_001123/codebase_fingerprint.json`
+- **Outcome**: success
+- **Notes / next action**: proceed to Gate-1 provenance closure (ImageNet archives/splits + SD-VAE + evaluator provenance) using artifactized JSON contracts.
+
+- **Run ID**: EXP-GATE1-GATE2-PROVENANCE-MAE-EVIDENCE-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` evidence lane + active `cuda` long-run lane in parallel
+- **Objective**: execute Gate-1 provenance closure tasks and start Gate-2 MAE paper-arch evidence generation.
+- **Gate-1 provenance outputs**:
+  - consolidated bundle snapshot: `outputs/ops/provenance_bundle_20260220_001234.json`
+  - provenance contract doc: `docs/provenance_contract.md`
+  - provenance contract test: `tests/unit/test_provenance_contract.py`
+  - release gate updated to include provenance contract test (`docs/release_gate_checklist.md`)
+- **Gate-1 validation**:
+  - `uv run pytest -q tests/unit/test_provenance_contract.py tests/unit/test_table8_faithful_config_contract.py`
+  - result: `5 passed`
+- **Gate-2 MAE paper-arch evidence outputs**:
+  - `outputs/imagenet/mae_paper_arch_evidence_smoke_20260220` (`in_channels=4`, `base_channels=32`, `steps=20`)
+  - `outputs/imagenet/mae_paper_arch_evidence_smoke_w16_20260220` (`in_channels=4`, `base_channels=16`, `steps=20`)
+  - `outputs/imagenet/mae_paper_arch_evidence_smoke_pixel3_20260220` (`in_channels=3`, `base_channels=16`, `steps=6`)
+  - matrix summary: `outputs/imagenet/mae_paper_arch_evidence_matrix_20260220/mae_paper_arch_evidence_matrix.json`
+  - MAE evidence gate check: `outputs/ops/mae_evidence_gate_check_20260220_001606.json`
+  - downstream load probes:
+    - `outputs/ops/latent_mae_load_probe_paper_20260220/stdout.json`
+    - `outputs/ops/pixel_mae_load_probe_paper_20260220/stdout.json`
+  - impact summary note: `docs_tmp/refinement/P3_MAE_PAPER_ARCH_IMPACT_SUMMARY_20260220.md`
+- **Outcome**: partial success
+  - Gate-1 items completed.
+  - Gate-2 evidence stream started with paper-arch MAE train/export + downstream load probes.
+- **Notes / next action**: proceed to Gate-3 faithful latent evidence package generation while retaining the active long-run lane as primary horizon source.
+
+- **Run ID**: EXP-GATE3-BUNDLE-TOGGLE-AUDIT-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` audit lane
+- **Objective**: harden Gate-3 operational checks with (a) run-bundle completeness audits and (b) faithful-toggle mismatch audits.
+- **Implemented tooling**:
+  - run-bundle audit utility: `scripts/audit_run_bundle.py`
+  - faithful-toggle audit utility: `scripts/audit_faithful_config_toggles.py`
+- **Artifacts**:
+  - run bundle audit:
+    - `outputs/ops/run_bundle_audit_20260220/run_bundle_audit.json`
+    - `outputs/ops/run_bundle_audit_20260220/run_bundle_audit.md`
+    - in-flight recheck: `outputs/ops/run_bundle_audit_20260220/inflight_recheck.md`
+  - faithful-toggle audit:
+    - `outputs/ops/faithful_toggle_audit_20260220/faithful_toggle_audit.json`
+    - `outputs/ops/faithful_toggle_audit_20260220/faithful_toggle_audit.md`
+- **Key findings**:
+  - faithful Table-8 templates (`ablation_default`, `b2`, `l2`) pass required parity toggles (`3/3`).
+  - closest-feasible + active long-run configs intentionally fail faithful-toggle checks (expected exceptions tracked).
+  - active long-run bundle now has all metadata except `latent_summary.json`, which is expected until run completion.
+- **Outcome**: success
+- **Notes / next action**: maintain these audits as recurring gates while long-horizon evidence runs complete.
+
+- **Run ID**: EXP-GATE5-EVAL-CLAIM-CONTRACT-ENFORCEMENT-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` audit lane
+- **Objective**: enforce claim-facing evaluation contract gates (pretrained Inception + reference stats provenance) and separate claim-facing vs smoke metrics.
+- **Implemented tooling/artifacts**:
+  - claim-eval contract auditor: `scripts/audit_claim_eval_contract.py`
+  - audited claim-facing eval set:
+    - `outputs/ops/claim_eval_contract_audit_20260220/claim_eval_contract_audit.json`
+    - `outputs/ops/claim_eval_contract_audit_20260220/claim_eval_contract_audit.md`
+  - canonical reference-stats contract:
+    - `outputs/datasets/imagenet1k_reference_stats_contract.json`
+  - report-eval reference audit:
+    - `outputs/ops/report_eval_reference_audit_20260220/report_eval_reference_audit.json`
+    - `outputs/ops/report_eval_reference_audit_20260220/report_eval_reference_audit.md`
+- **Validation commands**:
+  - `uv run pytest -q tests/integration/test_eval_fid_is_cache_roundtrip.py tests/integration/test_cache_reference_stats_smoke.py`
+  - result: `3 passed`
+- **Docs updates**:
+  - `docs/reproduction_report.md` adds claim-facing metric gate section and excludes smoke proxy evals from claim comparisons.
+  - `docs/eval_contract.md` links claim-facing audit helper.
+  - `docs/release_gate_checklist.md` includes claim-eval audit command and explicit Tier-C exclusion note.
+- **Outcome**: success
+- **Notes / next action**: continue Gate-6 claim/doc consistency audits and unresolved decision closure while long-horizon faithful evidence remains pending.
+
+- **Run ID**: EXP-GATE6-DECISION-DOC-CONSISTENCY-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` docs/audit lane
+- **Objective**: close/triage remaining open decisions with explicit impact and align claim/docs maps.
+- **Implemented changes**:
+  - added decision closure tracker: `docs/decision_closure_status.md`
+  - logged closure policy decision: `DEC-0038` in `docs/decision_log.md`
+  - updated fidelity map rows and gate statuses in `docs/paper_to_code_map.md`
+  - updated Table-8 tier caveat to explicitly classify generated restart config as `closest-feasible` in `docs/table8_config_map.md`
+  - updated reproduction report progress section to mark 2026-02-14 table as historical and added current gate-status bullets
+- **Audit artifacts**:
+  - `outputs/ops/docs_consistency_audit_20260220/docs_consistency_audit.json`
+  - `outputs/ops/docs_consistency_audit_20260220/docs_consistency_audit.md`
+- **Outcome**: success
+- **Notes / next action**: continue with Gate-7 full parity-critical validation sweep and command archive generation.
+
+- **Run ID**: EXP-GATE7-PARITY-VALIDATION-SWEEP-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` validation lane
+- **Objective**: run parity-critical unit/integration suites, run long-run contract tests, and re-run post-fix smoke launch checks.
+- **Validation summary**:
+  - unit suite result: `53 passed` (`tests/unit/test_queue_label_integrity.py`, `test_feature_drift_loss.py`, `test_table8_faithful_config_contract.py`, `test_compile_toggle_helpers.py`, `test_provenance_contract.py`, `test_data_queue.py`, `test_longrun_queue_strict_contract.py`, `test_paper_mae_arch.py`)
+  - integration suite result: `17 passed` (`eval contract/cache`, `queue strict/warmup/backfill`, `MAE load/mismatch`, `distributed guard`)
+  - long-run contract suite result: `4 passed`
+  - post-fix smoke launch artifacts:
+    - `outputs/ops/postfix_smoke_latent_20260220/stdout.json`
+    - `outputs/ops/postfix_smoke_pixel_20260220/stdout.json`
+- **Command archive artifact**:
+  - `outputs/ops/parity_validation_archive_20260220.md`
+- **Outcome**: success
+- **Notes / next action**: proceed to Gate-8 clean-room drill tasks and final claim-package assembly gates.
+
+- **Run ID**: EXP-GATE8-CLEANROOM-DRILL-LATENT-SMOKE-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu`
+- **Objective**: execute a clean-room drill from documented command only and verify automatic artifact generation + hash traceability.
+- **Command**:
+  - `uv run python scripts/train_latent.py --config configs/latent/smoke_raw.yaml --output-dir outputs/ops/cleanroom_drill_20260220_latent_smoke --checkpoint-path outputs/ops/cleanroom_drill_20260220_latent_smoke/checkpoint.pt`
+- **Primary artifacts**:
+  - `outputs/ops/cleanroom_drill_20260220_latent_smoke/latent_summary.json`
+  - `outputs/ops/cleanroom_drill_20260220_latent_smoke/RUN.md`
+  - `outputs/ops/cleanroom_drill_20260220_latent_smoke/env_snapshot.json`
+  - `outputs/ops/cleanroom_drill_20260220_latent_smoke/codebase_fingerprint.json`
+  - `outputs/ops/cleanroom_drill_20260220_latent_smoke/env_fingerprint.json`
+  - `outputs/ops/cleanroom_drill_20260220_latent_smoke/checkpoint.pt`
+- **Traceability artifacts**:
+  - `outputs/ops/cleanroom_drill_20260220_latent_smoke_manifest.json`
+  - `outputs/ops/cleanroom_drill_20260220_notes.md`
+- **Outcome**: success
+- **Notes / next action**: full faithful latent E2E drill remains gated on completion of long-horizon faithful-template run and claim-facing eval package generation.
+
+- **Run ID**: EXP-GATE9-CLAIM-DEVIATION-MATRIX-BOOTSTRAP-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` docs lane
+- **Objective**: bootstrap final-package docs by creating explicit claim→evidence and deviation-impact tables.
+- **Artifacts/docs added**:
+  - `docs/claim_to_evidence_matrix.md`
+  - `docs/deviations_table.md`
+- **Related updates**:
+  - linked both docs from `docs/reproduction_report.md` Claim-to-Evidence section
+  - extended `docs/release_gate_checklist.md` merge-gate checklist to include both docs
+- **Outcome**: partial success
+  - matrix/table scaffolds are in place
+  - final publication closure remains gated on pending faithful long-horizon artifacts
+- **Notes / next action**: close Gate-9 once pending Gate-3/Gate-4 execution items are complete and release checklist can be fully checked.
+
+- **Run ID**: EXP-GATE4-PIXEL-SCOPE-DEFER-DECISION-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` docs lane
+- **Objective**: publish explicit scoped-defer decision for pixel faithfulness and align docs to prevent claim ambiguity.
+- **Artifacts/docs updated**:
+  - `docs/pixel_scope_status.md`
+  - `docs/decision_log.md` (`DEC-0039`)
+  - `docs/table8_config_map.md` (pixel status cross-link)
+  - `docs/reproduction_report.md` (current gate status bullet)
+  - `README.md` (pixel scope tracker link)
+- **Outcome**: success
+- **Notes / next action**: keep `G4.1..G4.4` as explicit engineering/evidence backlog before pixel promotion.
+
+- **Run ID**: EXP-GATE9-GOLDEN-ARTIFACT-FREEZE-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` docs lane
+- **Objective**: freeze a current golden-artifact index and retention policy snapshot for disk-safe claim packaging.
+- **Updated index**:
+  - `docs/golden_artifacts.md`
+- **Snapshot artifact**:
+  - `outputs/ops/golden_artifacts_snapshot_20260220.md`
+- **Outcome**: success
+- **Notes / next action**: final handoff package (`G9.6`) remains blocked on pending faithful latent/pixel execution gates.
+
+- **Run ID**: EXP-FULL-PLAN-PENDING-BLOCKERS-LOG-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: N/A (tracking artifact)
+- **Objective**: explicitly log pending full-checklist blockers to avoid implicit/stale pending states.
+- **Artifact**:
+  - `docs_tmp/refinement/FULL_PLAN_PENDING_BLOCKERS_20260220.md`
+- **Outcome**: success
+- **Notes / next action**: resolve blockers by completing faithful long-horizon latent evidence and pixel parity backlog; then close release/final-package gates.
+
+- **Run ID**: EXP-G3-CLAIM-BUNDLE-WATCHER-SETUP-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` orchestration lane + active `cuda` long-run lane
+- **Objective**: remove manual handoff risk by launching an automated post-run claim bundle watcher for the active long-horizon latent run.
+- **Implementation**:
+  - added watcher/orchestration script: `scripts/wait_and_run_latent_claim_bundle.py`
+  - runbook automation section: `docs/imagenet_runbook.md` (Section 10)
+  - launched tmux watcher session: `gate3_claim_bundle_watch`
+- **Watcher artifacts**:
+  - `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/claim_bundle/RUN.md`
+  - `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/claim_bundle/wait_state.json`
+  - `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/claim_bundle/watch.log`
+- **Outcome**: success
+- **Notes / next action**: watcher will wait for `checkpoint_step_00200000.pt` and then execute last-K eval, alpha sweep, NN audits, and claim-scope sample/eval bundle automatically.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260220-0036
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: capture checkpointed progress + ETA snapshot for the active long-horizon run.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260220_0036.json`
+- **Snapshot highlights**:
+  - latest step: `10900/200000` (`5.45%`)
+  - log ETA: `159:49:46`
+  - estimated finish: `2026-02-26T16:25:55-06:00`
+- **Outcome**: success
+- **Notes / next action**: continue monitoring; keep watcher live for automatic Gate-3 evidence package execution at final checkpoint.
+
+- **Run ID**: EXP-G4-PIXEL-CONVNEXT-PARITY-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` validation lane
+- **Objective**: continue `G4.1` by adding a ConvNeXt-family pixel feature path and test coverage while long-horizon latent training runs.
+- **Code updates**:
+  - `scripts/train_pixel.py`
+    - new `--feature-encoder convnext_tiny` option
+    - new `--convnext-weights {none,imagenet1k_v1}` option
+    - ConvNeXt Tiny feature extractor path via hooked multi-scale return nodes (`features.1/3/5/7`)
+    - train summary now records `convnext_weights`
+  - `tests/integration/test_pixel_convnext_feature_encoder.py` (new)
+- **Validation**:
+  - `uv run pytest -q tests/integration/test_pixel_convnext_feature_encoder.py tests/integration/test_pixel_scheduler_checkpoint.py tests/integration/test_pixel_smoke.py`
+  - result: `4 passed`
+- **Docs updates**:
+  - `docs/table8_config_map.md` updated pixel-status note to reflect available `convnext_tiny` path and remaining ConvNeXt‑V2/pixel-MAE gap.
+  - `docs/pixel_scope_status.md` updated recently closed sub-gaps.
+  - `docs_tmp/refinement/FULL_PLAN_PENDING_BLOCKERS_20260220.md` updated pixel backlog note.
+- **Outcome**: success
+- **Notes / next action**: remaining pixel parity backlog is now mostly paper-specific feature inventory details and claim-facing evidence runs (`G4.3/G4.4`).
+
+- **Run ID**: EXP-G4-PIXEL-SCHEDULER-PARITY-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` test lane
+- **Objective**: close a concrete pixel parity gap by adding scheduler/warmup controls and checkpoint scheduler-state persistence in `train_pixel.py`.
+- **Code updates**:
+  - `scripts/train_pixel.py`
+    - added `--scheduler` and `--warmup-steps` options (`none|constant|cosine|warmup_cosine`)
+    - added resume controls `--resume-reset-scheduler` and `--resume-reset-optimizer-lr`
+    - added LR scheduler construction/stepping and `lr` logging in step metrics
+    - persisted scheduler state in checkpoint saves
+  - `tests/integration/test_pixel_scheduler_checkpoint.py` (new)
+    - smoke coverage for pixel scheduler config + `lr` logs
+    - checkpoint payload coverage for `scheduler_state_dict`
+  - `docs/table8_config_map.md` status note updated to reflect scheduler knobs are exposed
+- **Validation**:
+  - `uv run pytest -q tests/integration/test_pixel_scheduler_checkpoint.py tests/integration/test_pixel_smoke.py`
+  - result: `3 passed`
+- **Outcome**: success
+- **Notes / next action**: remaining pixel parity backlog still includes feature-encoder inventory parity and claim-facing ablation/paper-facing evidence runs.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260220-1155
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh long-horizon progress and ETA after restart/continuation.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260220_1155.json`
+- **Snapshot highlights**:
+  - latest step: `24300/200000` (`12.15%`)
+  - log ETA: `148:32:32`
+  - estimated finish: `2026-02-26T16:27:53-06:00`
+- **Outcome**: success
+- **Notes / next action**: keep `gate3_claim_bundle_watch` running; it will auto-launch the full post-run claim bundle at final checkpoint.
+
+- **Run ID**: EXP-G4-PIXEL-ABLATION-TOOLING-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` ablation lane
+- **Objective**: continue `G4.1`/`G4.3` readiness by adding and executing a reproducible pixel feature-encoder ablation runner.
+- **Implementation**:
+  - added `scripts/run_pixel_feature_encoder_ablations.py`
+    - variants: `tiny`, `mae` (`paper_resnet34_unet`, `feature-stages=4`), `convnext_tiny`
+    - writes summary JSON/Markdown + provenance artifacts + `RUN.md`
+- **Execution**:
+  - `uv run python scripts/run_pixel_feature_encoder_ablations.py --device cpu --output-dir outputs/feature_ablations/pixel_feature_encoders_20260220`
+- **Artifacts**:
+  - `outputs/feature_ablations/pixel_feature_encoders_20260220/pixel_feature_encoder_ablation_summary.json`
+  - `outputs/feature_ablations/pixel_feature_encoders_20260220/pixel_feature_encoder_ablation_summary.md`
+  - `outputs/feature_ablations/pixel_feature_encoders_20260220/RUN.md`
+- **Related docs**:
+  - `docs/pixel_scope_status.md` (new sub-gap closure note)
+  - `docs_tmp/refinement/FULL_PLAN_PENDING_BLOCKERS_20260220.md` (tooling-ready but claim-facing runs pending)
+- **Outcome**: success
+- **Notes / next action**: use this runner as the base for claim-facing pixel ablation package once eval protocol knobs and sample/eval scale are finalized.
+
+- **Run ID**: EXP-G4-PIXEL-PRETRAINED-CACHED-ABLATION-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` ablation/eval lane
+- **Objective**: generate a stronger (non-proxy) pixel feature-encoder ablation package using pretrained Inception with cached ImageNet val stats, while keeping runtime bounded.
+- **Implementation**:
+  - extended `scripts/run_pixel_proxy_ablation_package.py` with:
+    - eval profiles: `proxy` and `pretrained_cached`
+    - cached reference-stats path support
+    - optional `--allow-reference-contract-mismatch` passthrough
+- **Execution**:
+  - `uv run python scripts/run_pixel_proxy_ablation_package.py --device cpu --output-dir outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_v2 --eval-profile pretrained_cached --allow-reference-contract-mismatch --train-steps 6 --sample-count 128 --sample-batch-size 64 --eval-batch-size 64`
+- **Artifacts**:
+  - `outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_v2/pixel_proxy_ablation_summary.json`
+  - `outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_v2/pixel_proxy_ablation_summary.md`
+  - `outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_v2/RUN.md`
+- **Outcome**: success
+- **Notes / next action**: this closes small-sample ablation packaging readiness for `G4.3`; remaining pixel closure work is paper-facing package scale/protocol (`G4.4`).
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260220-1814
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh long-horizon latent status after pixel-ablation tranche.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260220_1814.json`
+- **Snapshot highlights**:
+  - latest step: `31800/200000` (`15.90%`)
+  - log ETA: `142:14:01`
+  - estimated finish: `2026-02-26T16:31:59-06:00`
+- **Outcome**: success
+- **Notes / next action**: keep watcher session alive; auto post-run claim bundle remains armed.
+
+- **Run ID**: EXP-G4-PIXEL-PAPER-PACKAGE-SCAFFOLD-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` packaging lane
+- **Objective**: add and validate a paper-facing pixel package orchestrator (checkpoint ladder + alpha sweep + claim sample/eval + NN audit), runnable independently of the latent long run.
+- **Implementation**:
+  - added `scripts/run_pixel_paper_facing_package.py`
+    - supports eval profiles: `proxy` and `pretrained_cached`
+    - supports optional last-K, alpha sweep, claim sample/eval, and NN audit
+    - writes package summary JSON/Markdown + provenance artifacts + `RUN.md`
+- **Smoke execution**:
+  - `uv run python scripts/run_pixel_paper_facing_package.py --checkpoint-path outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_v2/tiny/train/checkpoint.pt --output-root outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220 --device cpu --eval-profile proxy --skip-last-k --alphas 1.0 1.5 --alpha-sweep-samples 64 --alpha-sweep-batch-size 32 --claim-alpha 1.5 --claim-sample-count 128 --claim-sample-batch-size 32 --eval-batch-size 32 --nn-max-generated 64 --nn-max-reference 1000`
+- **Artifacts**:
+  - `outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220/paper_facing_package_summary.json`
+  - `outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220/paper_facing_package_summary.md`
+  - `outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220/RUN.md`
+- **Outcome**: success
+- **Notes / next action**: switch this to `pretrained_cached` with production checkpoint/scale to close `G4.4`.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260220-1837
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh long-horizon latent status after pixel package scaffold work.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260220_1837.json`
+- **Snapshot highlights**:
+  - latest step: `32200/200000` (`16.10%`)
+  - log ETA: `141:55:09`
+  - estimated finish: `2026-02-26T16:31:52-06:00`
+- **Outcome**: success
+- **Notes / next action**: keep `gate3_claim_bundle_watch` active; post-run claim bundle remains armed.
+
+- **Run ID**: EXP-G4-PIXEL-PAPER-PACKAGE-PROFILES-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` packaging lane
+- **Objective**: validate `scripts/run_pixel_paper_facing_package.py` end-to-end in both eval profiles (`proxy`, `pretrained_cached`).
+- **Proxy profile smoke**:
+  - command: `uv run python scripts/run_pixel_paper_facing_package.py --checkpoint-path outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_v2/tiny/train/checkpoint.pt --output-root outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220 --device cpu --eval-profile proxy --skip-last-k --alphas 1.0 1.5 --alpha-sweep-samples 64 --alpha-sweep-batch-size 32 --claim-alpha 1.5 --claim-sample-count 128 --claim-sample-batch-size 32 --eval-batch-size 32 --nn-max-generated 64 --nn-max-reference 1000`
+  - artifact: `outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220/paper_facing_package_summary.json`
+- **Pretrained-cached profile smoke**:
+  - command: `uv run python scripts/run_pixel_paper_facing_package.py --checkpoint-path outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_v2/tiny/train/checkpoint.pt --output-root outputs/feature_ablations/pixel_paper_facing_package_pretrained_smoke_20260220 --device cpu --eval-profile pretrained_cached --allow-reference-contract-mismatch --skip-last-k --alphas 1.0 --alpha-sweep-samples 64 --alpha-sweep-batch-size 32 --claim-alpha 1.5 --claim-sample-count 64 --claim-sample-batch-size 32 --eval-batch-size 32 --nn-max-generated 32 --nn-max-reference 1000`
+  - artifact: `outputs/feature_ablations/pixel_paper_facing_package_pretrained_smoke_20260220/paper_facing_package_summary.json`
+- **Outcome**: success
+- **Notes / next action**: this closes `G4.4` orchestration/profile-readiness; remaining work is production-scale package execution on target paper-facing checkpoints.
+
+- **Run ID**: EXP-G4-PIXEL-PAPER-PACKAGE-PREPROD-LAUNCH-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` packaging lane (background tmux)
+- **Objective**: launch a larger pretrained-cached pixel package run (convnext checkpoint) to move from smoke to pre-production evidence.
+- **Launch**:
+  - tmux session: `pixel_paper_pkg_preprod`
+  - command root output: `outputs/feature_ablations/pixel_paper_facing_package_preprod_convnext_20260220`
+  - live log: `outputs/feature_ablations/pixel_paper_facing_package_preprod_convnext_20260220/run.log`
+- **Status**: in progress
+- **Notes / next action**: on completion, ingest summary artifacts into report/checklist and update blocker status.
+
+- **Run ID**: EXP-G4-PIXEL-ORCHESTRATION-TEST-COVERAGE-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` test lane
+- **Objective**: harden non-blocked pixel work by adding regression coverage for orchestration scripts used in ablation and paper-facing packaging.
+- **Implementation**:
+  - added `tests/unit/test_pixel_orchestration_scripts.py`
+  - coverage includes:
+    - `scripts/run_pixel_paper_facing_package.py` helper/markdown contract
+    - `scripts/run_pixel_proxy_ablation_package.py` variant-contract assertions
+    - `scripts/run_pixel_feature_encoder_ablations.py` variant-contract assertions
+- **Validation**:
+  - `uv run pytest -q tests/unit/test_pixel_orchestration_scripts.py tests/integration/test_pixel_convnext_feature_encoder.py tests/integration/test_pixel_scheduler_checkpoint.py`
+  - result: `8 passed`
+- **Outcome**: success
+- **Notes / next action**: keep this suite in targeted parity checks while long-horizon latent and pixel preprod runs continue.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260220-1844
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh long-horizon latent progress/ETA during concurrent pixel-orchestration test hardening.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260220_1844.json`
+- **Snapshot highlights**:
+  - latest step: `32350/200000` (`16.175%`)
+  - log ETA: `141:47:54`
+  - estimated finish: `2026-02-26T16:32:38-06:00`
+- **Outcome**: success
+- **Notes / next action**: keep `gate3_claim_bundle_watch` active; continue non-blocked pixel/package closure tasks while latent run advances.
+
+- **Run ID**: EXP-G4-PIXEL-PAPER-PACKAGE-PREPROD-COMPLETE-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` packaging lane
+- **Objective**: complete the pretrained-cached pre-production pixel paper-facing package run and capture claim-facing proxy evidence bundle.
+- **Artifacts**:
+  - `outputs/feature_ablations/pixel_paper_facing_package_preprod_convnext_20260220/paper_facing_package_summary.json`
+  - `outputs/feature_ablations/pixel_paper_facing_package_preprod_convnext_20260220/paper_facing_package_summary.md`
+  - `outputs/feature_ablations/pixel_paper_facing_package_preprod_convnext_20260220/claim/eval_pretrained.json`
+  - `outputs/feature_ablations/pixel_paper_facing_package_preprod_convnext_20260220/claim/nn_audit.json`
+- **Snapshot highlights**:
+  - alpha sweep (`n=256`) FID: `~390.40` (`alpha=1.0`), `~390.41` (`alpha=1.5`), `~390.42` (`alpha=2.0`)
+  - claim package (`n=1024`, `alpha=1.5`) FID: `~379.36`, IS: `~1.2360`
+  - nearest-neighbor audit (`256x5000`) mean cosine: `~0.1524`, label-match rate: `~0.0039`
+- **Validation**:
+  - `uv run python scripts/audit_claim_eval_contract.py --eval-json outputs/feature_ablations/pixel_paper_facing_package_preprod_convnext_20260220/claim/eval_pretrained.json --output-json outputs/ops/claim_eval_contract_audit_20260220/pixel_preprod_claim_eval_contract_audit.json`
+  - result: pass (`1/1`)
+- **Outcome**: success
+- **Notes / next action**: this closes pre-production package execution readiness for `G4.4`; remaining gap is paper-scale sample/eval envelope and final claim-tier positioning.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260220-1848
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh long-horizon latent progress immediately after preprod pixel package completion.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260220_1848.json`
+- **Snapshot highlights**:
+  - latest step: `32400/200000` (`16.20%`)
+  - log ETA: `141:44:57`
+  - estimated finish: `2026-02-26T16:32:05-06:00`
+- **Outcome**: success
+- **Notes / next action**: continue blocking on long-horizon completion while using CPU lane for any additional non-blocked parity/doc closure work.
+
+- **Run ID**: EXP-P3-GATE-PROGRESS-REPORT-20260220-1848
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: N/A (reporting artifact)
+- **Objective**: publish an updated weighted gate/progress snapshot after pixel preprod package completion and latest long-run checkpoint progress.
+- **Artifact**:
+  - `docs_tmp/refinement/P3_GATE_PROGRESS_REPORT_20260220_1848.md`
+- **Outcome**: success
+- **Notes / next action**: continue with non-blocked `G4` execution while latent long-run remains active.
+
+- **Run ID**: EXP-G4-PIXEL-ABLATION-SCALE-LAUNCH-20260220
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` background lane (`tmux`)
+- **Objective**: queue the next non-blocked `G4` action immediately by launching a larger pretrained-cached pixel ablation package.
+- **Launch**:
+  - tmux session: `g4_pixel_ablation_scale`
+  - command: `uv run python scripts/run_pixel_proxy_ablation_package.py --device cpu --output-dir outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_scale1 --eval-profile pretrained_cached --allow-reference-contract-mismatch --train-steps 16 --sample-count 512 --sample-batch-size 64 --eval-batch-size 64`
+  - output root: `outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_scale1`
+- **Status**: in progress
+- **Notes / next action**: once complete, ingest summary metrics into gate docs and reassess `G4.3/G4.4` progress.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260220-1852
+- **Date**: 2026-02-20
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: capture latest long-run step/ETA after launching the next non-blocked `G4` run.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260220_1852.json`
+- **Snapshot highlights**:
+  - latest step: `32500/200000` (`16.25%`)
+  - log ETA: `141:39:14`
+  - estimated finish: `2026-02-26T16:32:56-06:00` (snapshot-time estimate)
+- **Outcome**: success
+- **Notes / next action**: continue concurrent CPU-lane `G4` work while latent long-run remains on `cuda:0`.
+
+- **Run ID**: EXP-G4-PIXEL-ABLATION-SCALE-COMPLETE-20260221
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` packaging lane
+- **Objective**: complete the larger pretrained-cached pixel ablation package and capture comparable variant metrics.
+- **Artifacts**:
+  - `outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_scale1/pixel_proxy_ablation_summary.json`
+  - `outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_scale1/pixel_proxy_ablation_summary.md`
+- **Result highlights**:
+  - `tiny`: `fid≈370.49`, `IS≈1.2734`
+  - `mae`: `fid≈395.99`, `IS≈1.2397`
+  - `convnext_tiny`: `fid≈418.05`, `IS≈1.2706`
+- **Validation**:
+  - `uv run python scripts/audit_claim_eval_contract.py --eval-json outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_scale1/tiny/eval/eval_pretrained.json --output-json outputs/ops/claim_eval_contract_audit_20260221/pixel_scale1_tiny_eval_contract_audit.json`
+  - `uv run python scripts/audit_claim_eval_contract.py --eval-json outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_scale1/mae/eval/eval_pretrained.json --output-json outputs/ops/claim_eval_contract_audit_20260221/pixel_scale1_mae_eval_contract_audit.json`
+  - `uv run python scripts/audit_claim_eval_contract.py --eval-json outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_scale1/convnext_tiny/eval/eval_pretrained.json --output-json outputs/ops/claim_eval_contract_audit_20260221/pixel_scale1_convnext_tiny_eval_contract_audit.json`
+- **Outcome**: success
+- **Notes / next action**: use this package as the updated `G4.3` evidence baseline while waiting on long-run latent closure.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260221-1450
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: capture current long-horizon latent progress and ETA after overnight advancement.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260221_1450.json`
+- **Snapshot highlights**:
+  - latest step: `56650/200000` (`28.325%`)
+  - log ETA: `120:06:48`
+  - estimated finish: `2026-02-26T14:57:03-06:00`
+- **Outcome**: success
+- **Notes / next action**: keep watcher armed (`gate3_claim_bundle_watch`) until final checkpoint is reached.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260221-1456
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh same-day long-run status after additional step advancement.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260221_1456.json`
+- **Snapshot highlights**:
+  - latest step: `57900/200000` (`28.95%`)
+  - log ETA: `119:04:58`
+  - estimated finish: `2026-02-26T15:00:30-06:00`
+- **Outcome**: success
+- **Notes / next action**: continue monitoring cadence and preserve watcher readiness for automatic claim-bundle execution.
+
+- **Run ID**: EXP-P3-GATE-PROGRESS-REPORT-20260221-1450
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: N/A (reporting artifact)
+- **Objective**: publish refreshed gate progress bars after G4 ablation-scale completion and updated long-run status.
+- **Artifact**:
+  - `docs_tmp/refinement/P3_GATE_PROGRESS_REPORT_20260221_1450.md`
+- **Outcome**: success
+- **Notes / next action**: continue non-blocked `G4` refinements and keep claim-governance docs synchronized as new artifacts land.
+
+- **Run ID**: EXP-G4-PIXEL-PAPER-PACKAGE-SCALE2-LAUNCH-20260221
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` background lane (`tmux`)
+- **Objective**: run a larger pretrained-cached paper-facing package pass on the best ablation-scale checkpoint (`tiny`) to tighten `G4.4` evidence.
+- **Launch**:
+  - tmux session: `g4_pixel_paper_pkg_scale2`
+  - command output root: `outputs/feature_ablations/pixel_paper_facing_package_scale2_tiny_20260221`
+  - command used: `scripts/run_pixel_paper_facing_package.py` with `alpha-sweep-samples=512`, `claim-sample-count=4096`, `nn-max-generated=512`, `nn-max-reference=10000`
+- **Outcome**: success
+- **Notes / next action**: ingest summary metrics + contract audits into gate docs.
+
+- **Run ID**: EXP-G4-PIXEL-PAPER-PACKAGE-SCALE2-COMPLETE-20260221
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` packaging lane
+- **Objective**: finalize scale2 paper-facing package and capture claim-facing metrics/NN audit.
+- **Artifacts**:
+  - `outputs/feature_ablations/pixel_paper_facing_package_scale2_tiny_20260221/paper_facing_package_summary.json`
+  - `outputs/feature_ablations/pixel_paper_facing_package_scale2_tiny_20260221/paper_facing_package_summary.md`
+  - `outputs/feature_ablations/pixel_paper_facing_package_scale2_tiny_20260221/claim/eval_pretrained.json`
+  - `outputs/feature_ablations/pixel_paper_facing_package_scale2_tiny_20260221/claim/nn_audit.json`
+- **Result highlights**:
+  - claim package (`n=4096`, `alpha=1.5`): `fid≈360.61`, `IS≈1.2789`
+  - alpha sweep (`n=512` each): `fid≈370.49` (`a=1.0`), `≈370.51` (`a=1.5`), `≈370.52` (`a=2.0`)
+  - NN audit (`512x10000`): mean cosine `≈0.1804`, label-match `≈0.0059`
+- **Validation**:
+  - `uv run python scripts/audit_claim_eval_contract.py --eval-json outputs/feature_ablations/pixel_paper_facing_package_scale2_tiny_20260221/claim/eval_pretrained.json --output-json outputs/ops/claim_eval_contract_audit_20260221/pixel_paper_pkg_scale2_tiny_claim_eval_contract_audit.json`
+  - result: pass (`1/1`)
+- **Outcome**: success
+- **Notes / next action**: retains `G4.4` as open because this remains below final paper-scale target envelope.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260221-1613
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh latent long-run status after scale2 package completion.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260221_1613.json`
+- **Snapshot highlights**:
+  - latest step: `58300/200000` (`29.15%`)
+  - log ETA: `118:44:40`
+  - estimated finish: `2026-02-26T14:58:27-06:00`
+- **Outcome**: success
+- **Notes / next action**: watcher remains armed in `gate3_claim_bundle_watch`.
+
+- **Run ID**: EXP-P3-GATE-PROGRESS-REPORT-20260221-1613
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: N/A (reporting artifact)
+- **Objective**: publish post-scale2 gate/progress update.
+- **Artifacts**:
+  - `docs_tmp/refinement/P3_GATE_PROGRESS_REPORT_20260221_1450.md`
+  - `docs_tmp/refinement/P3_GATE_PROGRESS_REPORT_20260221_1613.md`
+- **Outcome**: success
+- **Notes / next action**: maintain incremental progress updates while long-run latent evidence lane remains active.
+
+- **Run ID**: EXP-G4-PIXEL-PAPER-PACKAGE-SCALE3-LAUNCH-20260221
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` background lane (`tmux`)
+- **Objective**: run an additional larger pretrained-cached paper-facing package pass (`scale3`) to further tighten `G4.4` evidence.
+- **Launch**:
+  - tmux session: `g4_pixel_paper_pkg_scale3`
+  - command output root: `outputs/feature_ablations/pixel_paper_facing_package_scale3_tiny_20260221`
+  - command used: `scripts/run_pixel_paper_facing_package.py` with `alpha-sweep-samples=1024`, `claim-sample-count=8192`, `nn-max-generated=1024`, `nn-max-reference=15000`
+- **Outcome**: success
+- **Notes / next action**: ingest scale3 metrics and claim-contract audit into gate docs.
+
+- **Run ID**: EXP-G4-PIXEL-PAPER-PACKAGE-SCALE3-COMPLETE-20260221
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: `cpu` packaging lane
+- **Objective**: finalize scale3 paper-facing package and record higher-count claim metrics/audit.
+- **Artifacts**:
+  - `outputs/feature_ablations/pixel_paper_facing_package_scale3_tiny_20260221/paper_facing_package_summary.json`
+  - `outputs/feature_ablations/pixel_paper_facing_package_scale3_tiny_20260221/paper_facing_package_summary.md`
+  - `outputs/feature_ablations/pixel_paper_facing_package_scale3_tiny_20260221/claim/eval_pretrained.json`
+  - `outputs/feature_ablations/pixel_paper_facing_package_scale3_tiny_20260221/claim/nn_audit.json`
+- **Result highlights**:
+  - claim package (`n=8192`, `alpha=1.5`): `fid≈360.30`, `IS≈1.2742`
+  - alpha sweep (`n=1024` each): `fid≈365.35` (`a=1.0`), `≈365.36` (`a=1.5`), `≈365.38` (`a=2.0`)
+  - NN audit (`1024x15000`): mean cosine `≈0.2282`, label-match `≈0.0000`
+- **Validation**:
+  - `uv run python scripts/audit_claim_eval_contract.py --eval-json outputs/feature_ablations/pixel_paper_facing_package_scale3_tiny_20260221/claim/eval_pretrained.json --output-json outputs/ops/claim_eval_contract_audit_20260221/pixel_paper_pkg_scale3_tiny_claim_eval_contract_audit.json`
+  - result: pass (`1/1`)
+- **Outcome**: success
+- **Notes / next action**: keeps `G4.4` materially stronger but still below final paper-scale target envelope.
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260221-1652
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh latent long-run status after scale3 completion.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260221_1652.json`
+- **Snapshot highlights**:
+  - latest step: `59100/200000` (`29.55%`)
+  - log ETA: `117:58:47`
+  - estimated finish: `2026-02-26T14:50:39-06:00`
+- **Outcome**: success
+- **Notes / next action**: watcher remains armed in `gate3_claim_bundle_watch`.
+
+- **Run ID**: EXP-P3-GATE-PROGRESS-REPORT-20260221-1652
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: N/A (reporting artifact)
+- **Objective**: publish a post-scale3 gate/progress update.
+- **Artifact**:
+  - `docs_tmp/refinement/P3_GATE_PROGRESS_REPORT_20260221_1652.md`
+- **Outcome**: success
+- **Notes / next action**: continue non-blocked evidence/cleanup work while latent long-run advances.
+
+- **Run ID**: EXP-S0-POST-RESTART-SANITY-20260221-1656
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: host environment sanity check
+- **Objective**: capture post-restart runtime sanity artifact (uv/torch/cuda/disk) before continuing refinement work.
+- **Artifacts**:
+  - `outputs/ops/post_restart_sanity_20260221_165604.json`
+- **Outcome**: success
+- **Notes / next action**: run full test suite and archive result in `outputs/ci`.
+
+- **Run ID**: EXP-S0-FULL-PYTEST-20260221-1656
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: local validation lane (CPU-heavy, concurrent with active CUDA long run)
+- **Objective**: execute full repository test suite and archive output for current post-restart state.
+- **Validation command**:
+  - `uv run pytest -q`
+- **Artifacts**:
+  - `outputs/ci/pytest_20260221_165609.txt`
+- **Result highlights**:
+  - `195 passed`, `14 warnings`, runtime `836.18s` (`0:13:56`)
+- **Outcome**: success
+- **Notes / next action**: keep warning profile monitored (Torch JIT deprecation warning in `tests/unit/test_feature_drift_loss.py`).
+
+- **Run ID**: EXP-G3-LONGRUN-STATUS-SNAPSHOT-20260221-1710
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active `cuda` training lane
+- **Objective**: refresh latent long-run status after validation tranche.
+- **Artifact**:
+  - `outputs/ops/longrun_status_20260221_1710.json`
+- **Snapshot highlights**:
+  - latest step: `59450/200000` (`29.73%`)
+  - log ETA: `117:41:52`
+  - estimated finish: `2026-02-26T14:52:20-06:00`
+- **Outcome**: success
+- **Notes / next action**: watcher remains armed in `gate3_claim_bundle_watch`.
+
+- **Run ID**: EXP-P3-GATE-PROGRESS-REPORT-20260221-1710
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: N/A (reporting artifact)
+- **Objective**: publish refreshed gate/progress snapshot after full-suite validation and updated long-run status.
+- **Artifact**:
+  - `docs_tmp/refinement/P3_GATE_PROGRESS_REPORT_20260221_1710.md`
+- **Outcome**: success
+- **Notes / next action**: continue non-blocked parity closure tasks while long-run latent evidence progresses.
+
+- **Run ID**: EXP-G4-PIXEL-ORCHESTRATION-EVAL-CONTRACT-TESTS-20260221
+- **Date**: 2026-02-21
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: local CPU test lane
+- **Objective**: strengthen `G4.2` parity coverage by pinning paper-facing pixel package eval-profile command contracts (`proxy` vs `pretrained_cached`).
+- **Code changes**:
+  - `tests/unit/test_pixel_orchestration_scripts.py`
+    - added assertions for proxy profile flags (`--inception-weights none`, tensor reference path, max reference samples).
+    - added assertions for pretrained-cached profile flags (`--inception-weights pretrained`, imagefolder reference, `--load-reference-stats`, optional contract mismatch flag).
+- **Validation**:
+  - `uv run pytest -q tests/unit/test_pixel_orchestration_scripts.py`
+  - result: `6 passed in 1.27s`
+- **Outcome**: success
+- **Notes / next action**: continue closing remaining pixel paper-specific parity items beyond orchestration/eval contract wiring.
+
+- **Run ID**: EXP-P4-F0-TABLE8-CONTRACT-HARDEN-20260223
+- **Date**: 2026-02-23
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: local CPU validation lane
+- **Objective**: start P4 high-confidence faithfulness fixes by hardening Table-8 faithful-template loss-inventory invariants and claim wording.
+- **Code changes**:
+  - `configs/latent/imagenet1k_sdvae_latents_table8_ablation_default_template.yaml`
+    - set `include-patch4-stats: true`
+    - set `feature-include-raw-drift-loss: true`
+    - set `feature-raw-drift-loss-weight: 1.0`
+  - `configs/latent/imagenet1k_sdvae_latents_table8_b2_template.yaml`
+    - set `include-patch4-stats: true`
+    - set `feature-include-raw-drift-loss: true`
+    - set `feature-raw-drift-loss-weight: 1.0`
+  - `configs/latent/imagenet1k_sdvae_latents_table8_l2_template.yaml`
+    - set `include-patch4-stats: true`
+    - set `feature-include-raw-drift-loss: true`
+    - set `feature-raw-drift-loss-weight: 1.0`
+  - `tests/unit/test_table8_faithful_config_contract.py`
+    - added contract asserts for `include-patch4-stats`, `feature-include-raw-drift-loss`, and `feature-raw-drift-loss-weight`.
+  - docs tightened for claim clarity:
+    - `docs/table8_config_map.md`
+    - `docs/paper_to_code_map.md`
+- **Validation**:
+  - `uv run pytest -q tests/unit/test_table8_faithful_config_contract.py`
+  - result: `2 passed in 0.01s`
+- **Outcome**: success
+- **Notes / next action**: next P4 step should resolve MAE width parity decision/evidence for B/2 and L/2 faithful templates, then expand contract checks accordingly.
+
+- **Run ID**: EXP-P4-F0-MAE-WIDTH-PARITY-CONTRACT-20260223
+- **Date**: 2026-02-23
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: local CPU validation lane
+- **Objective**: close P4 MAE width parity decision for faithful Table-8 latent templates and enforce it through contracts/audits.
+- **Evidence source used for decision**:
+  - `Drift_Models/Drift_Models.md` Table-8 row `ResNet: base width` (`256` for ablation-default, `640` for B/2 and L/2).
+- **Code changes**:
+  - `configs/latent/imagenet1k_sdvae_latents_table8_ablation_default_template.yaml`
+    - set `mae-encoder-path: outputs/imagenet/mae_variant_a_w256/mae_encoder.pt`
+  - `configs/latent/imagenet1k_sdvae_latents_table8_b2_template.yaml`
+    - set `feature-base-channels: 640`
+    - set `mae-encoder-path: outputs/imagenet/mae_variant_a_w640/mae_encoder.pt`
+  - `configs/latent/imagenet1k_sdvae_latents_table8_l2_template.yaml`
+    - set `feature-base-channels: 640`
+    - set `mae-encoder-path: outputs/imagenet/mae_variant_a_w640/mae_encoder.pt`
+  - `tests/unit/test_table8_faithful_config_contract.py`
+    - enforce per-template width contracts and MAE-path token expectations (`w256` / `w640`).
+  - `scripts/audit_faithful_config_toggles.py`
+    - include patch4/raw-drift required toggles and per-template width/path overrides.
+  - docs/decision sync:
+    - `docs/table8_config_map.md`
+    - `docs/faithfulness_evidence_requirements.md`
+    - `docs/paper_to_code_map.md`
+    - `docs/claim_to_evidence_matrix.md`
+    - `docs/decision_closure_status.md`
+    - `docs/decision_log.md` (DEC-0040)
+    - `docs/reproduction_report.md`
+- **Validation**:
+  - `uv run pytest -q tests/unit/test_table8_faithful_config_contract.py`
+    - result: `2 passed in 0.01s`
+  - `uv run python scripts/audit_faithful_config_toggles.py --config configs/latent/imagenet1k_sdvae_latents_table8_ablation_default_template.yaml --config configs/latent/imagenet1k_sdvae_latents_table8_b2_template.yaml --config configs/latent/imagenet1k_sdvae_latents_table8_l2_template.yaml --output-json outputs/ops/faithful_toggle_audit_20260223/faithful_toggle_audit.json --output-md outputs/ops/faithful_toggle_audit_20260223/faithful_toggle_audit.md`
+    - result: `3/3 pass`
+- **Outcome**: success
+- **Notes / next action**: generate/import MAE exports matching pinned widths (`w256`, `w640`) and capture provenance artifacts before promoting faithful-template run claims.
+
+- **Run ID**: EXP-P4-F0-MAE-WIDTH-EXPORT-QUEUE-20260223
+- **Date**: 2026-02-23
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: single-visible-GPU host (`cuda:0`), with long-horizon latent run still active
+- **Objective**: convert MAE width-parity follow-up into an executable, provenance-first queued pipeline that can start automatically once the active Gate-3 lane and claim-bundle work complete.
+- **Code changes**:
+  - added width-parity bootstrap MAE configs:
+    - `configs/mae/imagenet1k_sdvae_latents_shards_table8_w256_bootstrap.yaml`
+    - `configs/mae/imagenet1k_sdvae_latents_shards_table8_w640_bootstrap.yaml`
+  - added orchestrator:
+    - `scripts/run_mae_width_parity_exports.py`
+    - features: optional upstream wait-state gating, optional GPU-idle gating, per-variant disk-headroom guard, sequential `w256`/`w640` training, bundle-audit checks (`base_channels`, `encoder_arch`) against exported metadata.
+  - runbook/document sync:
+    - `docs/imagenet_runbook.md`
+    - `docs/table8_config_map.md`
+    - `docs/faithfulness_evidence_requirements.md`
+- **Validation**:
+  - `uv run python -m py_compile scripts/run_mae_width_parity_exports.py`
+  - `uv run pytest -q tests/unit/test_table8_faithful_config_contract.py` -> `2 passed`
+  - `uv run python scripts/audit_faithful_config_toggles.py --config configs/latent/imagenet1k_sdvae_latents_table8_ablation_default_template.yaml --config configs/latent/imagenet1k_sdvae_latents_table8_b2_template.yaml --config configs/latent/imagenet1k_sdvae_latents_table8_l2_template.yaml --output-json outputs/ops/faithful_toggle_audit_20260223_r2/faithful_toggle_audit.json --output-md outputs/ops/faithful_toggle_audit_20260223_r2/faithful_toggle_audit.md` -> `3/3 pass`
+- **Launch state**:
+  - queued session: `tmux` session `mae_width_parity_queue`
+  - launcher log: `outputs/ops/mae_width_parity_queue_20260223_164932.log`
+  - orchestrator state root: `outputs/ops/mae_width_parity_exports_20260223_164933`
+  - current gate condition: waiting on `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/claim_bundle/wait_state.json` to reach `status=done`
+- **Outcome**: in progress (queued and armed)
+- **Notes / next action**: once upstream wait gates clear, ingest `summary.json` from the orchestrator run root, then audit export bundles into faithfulness gate docs before promoting any faithful-template latent claim scope.
+
+- **Run ID**: EXP-G3-PROXY-EVAL-STEP120K-20260223
+- **Date**: 2026-02-23
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: active single-GPU lane (`cuda:0`) shared with long-horizon latent training
+- **Objective**: produce a quick interim quality read on immutable checkpoint `step=120000` while the 200k run is still in progress.
+- **Commands**:
+  - sample/decode:
+    - `uv run python scripts/sample_latent.py --device cuda:0 --seed 1337 --checkpoint-path outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/checkpoints/checkpoint_step_00120000.pt --config outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/config.yaml --output-root outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_eval_step120000_alpha1p5_20260223_180156/samples --n-samples 1000 --batch-size 16 --alpha 1.5 --write-imagefolder --decode-mode sd_vae --sd-vae-model-id stabilityai/sd-vae-ft-mse --sd-vae-revision 31f26fdeee1355a5c34592e401dd41e45d25a493 --decode-image-size 256 --postprocess-mode clamp_0_1 --image-format jpg`
+  - eval (first attempt):
+    - failed as expected on strict reference-stats contract because cached stats payload predates contract hash embedding.
+  - eval (successful rerun):
+    - `uv run python scripts/eval_fid_is.py --device cuda:0 --batch-size 32 --inception-weights pretrained --reference-source imagefolder --reference-imagefolder-root outputs/datasets/imagenet1k_raw/val --generated-source imagefolder --generated-imagefolder-root outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_eval_step120000_alpha1p5_20260223_180156/samples/images --load-reference-stats outputs/datasets/imagenet1k_val_reference_stats_pretrained.pt --allow-reference-contract-mismatch --max-generated-samples 1000 --output-path outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_eval_step120000_alpha1p5_20260223_180156/eval_pretrained_1k.json`
+- **Artifacts**:
+  - sample summary: `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_eval_step120000_alpha1p5_20260223_180156/samples/sample_summary.json`
+  - proxy eval: `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_eval_step120000_alpha1p5_20260223_180156/eval_pretrained_1k.json`
+  - command log: `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_eval_step120000_alpha1p5_20260223_180156/proxy_eval.log`
+- **Interim metrics** (`n=1000`, pretrained Inception):
+  - `FID: 365.6823`
+  - `IS: 1.8488 ± 0.1019`
+- **Outcome**: success (proxy-only checkpoint read)
+- **Notes / next action**:
+  - this is a noisy interim proxy (`1k` samples), not claim-facing evidence.
+  - regenerate reference stats with current contract fields to remove the temporary `--allow-reference-contract-mismatch` escape hatch for future interim evals.
+
+- **Run ID**: EXP-G3-PROXY-ALPHA-SWEEP-STEP120K-20260223
+- **Date**: 2026-02-23
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: shared single-GPU lane (`cuda:0`) during active long-run training
+- **Objective**: run a tiny interim alpha sweep (`1.0`, `1.5`, `2.0`) on immutable checkpoint `step=120000` for directional signal.
+- **Execution**:
+  - orchestrated via `/tmp/run_proxy_alpha_sweep_step120k.sh` in `tmux` session `proxy_alpha_sweep_120k`
+  - output root:
+    `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_alpha_sweep_step120000_1k_20260223_183008`
+  - per-alpha run recipe:
+    - `sample_latent.py` (`n=1000`, `alpha={1.0,1.5,2.0}`, SD-VAE decode)
+    - `eval_fid_is.py` (`pretrained`, `--max-generated-samples 1000`, `--allow-reference-contract-mismatch`)
+- **Artifacts**:
+  - sweep summary:
+    `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_alpha_sweep_step120000_1k_20260223_183008/alpha_sweep_summary_1k.json`
+  - command log:
+    `outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/proxy_alpha_sweep_step120000_1k_20260223_183008/proxy_alpha_sweep.log`
+- **Interim metrics** (`n=1000`, pretrained Inception):
+  - `alpha=1.0`: `FID 365.4034`, `IS 1.7640 ± 0.0994`
+  - `alpha=1.5`: `FID 365.6823`, `IS 1.8488 ± 0.1019`
+  - `alpha=2.0`: `FID 365.5924`, `IS 1.8993 ± 0.0923`
+- **Outcome**: success
+- **Notes / next action**:
+  - FID is effectively flat in this proxy sweep (best by a small margin at `alpha=1.0`); IS rises with alpha.
+  - keep `alpha=1.5` as neutral default until claim-facing higher-sample sweeps are available from the final checkpoint bundle.
+
+- **Run ID**: EXP-PUBLIC-OPS-HARDENING-CLOSURE-20260225
+- **Date**: 2026-02-25
+- **Code hash**: N/A (not a git repository)
+- **Hardware**: local dev host (`cuda:0` visible; closure tasks mostly CPU/doc/CI ops)
+- **Objective**: execute post-critique public-release hardening tasks for runtime compatibility policy, packaging/release ops, CI/CD reliability, docs UX, and publicity-system artifacts.
+- **Key outputs**:
+  - centralized runtime/device + compile policy:
+    - `drifting_models/utils/device.py`
+    - `scripts/runtime_preflight.py`
+    - `scripts/train_latent.py`
+    - `scripts/train_pixel.py`
+  - CI/CD hardening:
+    - `.github/workflows/ci.yml` (cache + experimental non-blocking backend jobs)
+    - `.github/workflows/nightly.yml` (cache)
+    - `.github/workflows/release.yml` (cache)
+  - release/docs hardening:
+    - `docs/RELEASE_CHECKLIST.md`
+    - `docs/branch_protection.md`
+    - `docs/ci_local_validation_20260225.md`
+    - `docs/claim_boundary_audit_20260225.md`
+    - `docs/release_readiness_status_20260225.md`
+    - `docs/PROGRESS_BARS.md`
+  - publicity system artifacts:
+    - `docs_tmp/socials/PUBLICITY_LAUNCH_PLAN_V1.md`
+    - `docs_tmp/socials/PUBLICITY_TEMPLATES_V1.md`
+    - `docs_tmp/socials/PUBLICITY_UTM_LINKS_V1.md`
+    - `docs_tmp/socials/PUBLICITY_ASSET_PACK_CHECKLIST_V1.md`
+    - `docs_tmp/socials/PUBLICITY_CHANNEL_PLAYBOOK_V1.md`
+    - `docs_tmp/socials/PUBLICITY_RESPONSE_SOP_V1.md`
+    - `docs_tmp/socials/PUBLICITY_EXECUTION_LOG_V1.md`
+- **Validation**:
+  - `uv run pytest -q tests/unit/test_runtime_utils.py tests/unit/test_compile_toggle_helpers.py tests/integration/test_runtime_preflight_smoke.py` -> `23 passed`
+  - `uv run pytest -q tests/unit/test_runtime_preflight_summary.py` -> `3 passed`
+  - `uv run python -m build` + `uv run twine check dist/*` -> pass
+  - workflow YAML parse pass (`ci.yml`, `nightly.yml`, `release.yml`)
+- **Outcome**: partial success (implementation closure complete; external publish/post actions pending)
+- **Notes / next action**:
+  - publish Wave-1 and Wave-2 posts, then record permalinks in `docs_tmp/socials/PUBLICITY_KPI_DASHBOARD_V1.md`.
+  - execute TestPyPI/PyPI publish flow and close remaining release checklist items.

@@ -1,0 +1,21 @@
+# Stage-2 raw drifting smoke config
+seed: 1337
+device: cpu
+steps: 3
+log-every: 1
+groups: 2
+negatives-per-group: 2
+positives-per-group: 2
+num-classes: 1000
+image-size: 16
+channels: 4
+patch-size: 4
+hidden-dim: 64
+depth: 2
+num-heads: 4
+mlp-ratio: 4.0
+register-tokens: 8
+temperature: 0.05
+learning-rate: 0.0001
+use-feature-loss: false
+use-queue: false

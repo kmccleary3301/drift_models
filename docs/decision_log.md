@@ -1,0 +1,708 @@
+# Decision Log
+
+Use this file to record all non-trivial implementation decisions.
+
+## Record template
+- **ID**: DEC-XXXX
+- **Date**: YYYY-MM-DD
+- **Owner**: 
+- **Category**: PAPER-BACKED | INFERRED | OPEN
+- **Context**:
+- **Options considered**:
+- **Decision**:
+- **Rationale**:
+- **Validation evidence**:
+- **Residual risk**:
+- **Follow-up action**:
+
+## Entries
+
+- **ID**: DEC-0001
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-1 integration tests need stable assertions for short toy runs.
+- **Options considered**:
+  - coverage-based assertions for both modes
+  - direct FID-like proxy assertions
+  - loss/drift improvement + destructive ablation distance comparison
+- **Decision**: use robust assertions: baseline reduces loss+drift over time; attraction-only performs worse in target-distance.
+- **Rationale**: mode-coverage checks are brittle at short horizons and can fail despite valid training signal; selected criteria remain faithful to anti-symmetry ablation intent.
+- **Validation evidence**: `tests/integration/test_toy_training.py` passes consistently in local suite.
+- **Residual risk**: toy proxy metrics do not guarantee large-scale generative quality behavior.
+- **Follow-up action**: add longer-horizon toy diagnostics with saved sample snapshots and stricter mode-balance checks.
+
+- **ID**: DEC-0002
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-2 requires a runnable DiT-like baseline before full paper-parity architecture details are integrated.
+- **Options considered**:
+  - full parity block (RoPE + QK-norm + RMSNorm + exact adaLN details) immediately
+  - minimal DiT-like block with adaLN-zero conditioning and SwiGLU, then incrementally add parity features
+- **Decision**: implement a minimal DiT-like generator first, preserving core conditioning and register-token interfaces.
+- **Rationale**: establishes stable training wiring and testability quickly; reduces debugging surface before feature-stack and paper-parity upgrades.
+- **Validation evidence**: `tests/unit/test_dit_like.py` and `tests/integration/test_stage2_smoke.py` pass.
+- **Residual risk**: current module is not yet architecture-identical to the paper’s final model.
+- **Follow-up action**: add RoPE, QK-norm, RMSNorm, and stricter conditioning parity in the next architecture pass.
+
+- **ID**: DEC-0003
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-3 feature-space drift path is needed before integrating paper-complete multi-scale feature encoders.
+- **Options considered**:
+  - implement full Appendix A.5/A.6 feature set immediately
+  - implement a clean subset (per-location + global + patch stats) with strict normalization and temperature aggregation
+- **Decision**: implement a modular feature-space loss subset with map-level feature normalization and drift normalization, then expand to full paper feature inventory.
+- **Rationale**: preserves core behavior and enables stable integration tests without overfitting to ambiguous appendix details too early.
+- **Validation evidence**: `tests/unit/test_feature_drift_loss.py`, `tests/unit/test_features_vectorize.py`, and `tests/integration/test_stage2_smoke.py` pass.
+- **Residual risk**: subset may not capture all feature-statistics gains reported in ablation table A.5.
+- **Follow-up action**: add explicit channel-second-moment input feature and full per-stage feature selection parity.
+
+- **ID**: DEC-0004
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Queue-backed grouped sampling can fail early when requested class labels are not yet represented in per-class queues.
+- **Options considered**:
+  - strict failure on empty class queues
+  - fallback to global unconditional samples
+  - prefill missing requested classes before grouped sampling
+- **Decision**: prefill missing requested classes with synthetic samples in Stage-2 smoke scripts before sampling.
+- **Rationale**: preserves class-conditional positive sampling semantics while keeping smoke runs robust.
+- **Validation evidence**: queue-backed raw and feature smoke runs complete successfully in `scripts/train_latent.py`.
+- **Residual risk**: synthetic prefill is a smoke-run convenience and not a production data-loader strategy.
+- **Follow-up action**: replace prefill logic with real dataset-backed queue warmup in training pipeline.
+
+- **ID**: DEC-0005
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-2 architecture parity checklist requires incremental support for RMSNorm, QK-Norm, RoPE, deterministic checks, and mixed-precision smoke validation.
+- **Options considered**:
+  - keep `nn.MultiheadAttention` and bolt on partial features
+  - switch to custom attention core to enable QK-Norm and RoPE cleanly
+- **Decision**: use a custom attention module (`DiTAttention`) and expose parity toggles via config/CLI (`norm_type`, `use_qk_norm`, `use_rope`).
+- **Rationale**: custom attention provides direct control over normalization and positional transforms while preserving testability.
+- **Validation evidence**: `tests/unit/test_dit_like.py`, `tests/unit/test_dit_determinism.py`, and `tests/integration/test_mixed_precision_smoke.py` pass.
+- **Residual risk**: implementation still differs from paper-level production details (e.g., exact RoPE variant and broader system hyperparameters).
+- **Follow-up action**: wire these toggles into large-run configs and compare against baseline ablations.
+
+- **ID**: DEC-0006
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Feature-space drifting normalization in A.6 requires consistent scaling across generated/positive/unconditional features, drift normalization, and temperature semantics.
+- **Options considered**:
+  - keep prior normalization behavior and only add logging metrics
+  - align with A.6 by adding unconditional feature scaling, per-temperature drift normalization, and optional temperature scaling by `sqrt(Cj)`
+- **Decision**: implement A.6-aligned normalization path with shared-location support for both feature and drift scales, plus `scale_temperature_by_sqrt_channels` toggle.
+- **Rationale**: removes a semantic mismatch (unconditional negatives unscaled), improves parity with the paper equations, and exposes robust drift/scale diagnostics per temperature.
+- **Validation evidence**: `tests/unit/test_feature_drift_loss.py`, `tests/integration/test_stage2_smoke.py`, and full `pytest` pass.
+- **Residual risk**: choice of whether to include unconditional samples in the empirical estimation of `Sj` remains an open ablation.
+- **Follow-up action**: evaluate `Sj` estimation variants in larger latent-space runs and record metric deltas.
+
+- **ID**: DEC-0007
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Reproducibility tracking lacked consistent config hashing and environment fingerprint capture across train entrypoints.
+- **Options considered**:
+  - keep ad-hoc CLI logs only
+  - add shared reproducibility utilities and write structured per-run artifacts
+- **Decision**: add shared utilities (`file_sha256`, `environment_fingerprint`, `write_json`) and wire them into latent/MAE/pixel train scripts with optional `--output-dir`.
+- **Rationale**: provides replay-grade metadata for experiment logs and reduces ambiguity in non-git environments.
+- **Validation evidence**: `tests/unit/test_repro_utils.py`, `tests/integration/test_repro_outputs.py`, and smoke runs writing `*_summary.json` + `env_fingerprint.json`.
+- **Residual risk**: dataset provenance and dataloader state are still not fingerprinted in these smoke scaffolds.
+- **Follow-up action**: extend run metadata with dataset manifest hashes and checkpoint resume state IDs.
+
+- **ID**: DEC-0008
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Queue-backed training previously used ad-hoc random tensors for "real" sample updates, limiting replayability and making dataset semantics implicit.
+- **Options considered**:
+  - keep random tensor pushes in train scripts
+  - introduce a dataset-backed provider abstraction and use it for queue prime/update paths
+- **Decision**: add `RealBatchProvider` with deterministic synthetic dataset support and integrate it into latent/pixel queue pipelines.
+- **Rationale**: brings queue behavior under explicit dataset control while remaining lightweight for smoke testing.
+- **Validation evidence**: `tests/unit/test_data_provider.py` and queue-enabled script runs complete with finite metrics.
+- **Residual risk**: provider currently supports synthetic dataset source only.
+- **Follow-up action**: add real dataset backends (ImageFolder/WebDataset) and dataset manifest hashing.
+
+- **ID**: DEC-0009
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Long-running staged training requires reliable resume semantics and runtime performance telemetry for controlled scaling.
+- **Options considered**:
+  - script-local ad-hoc checkpoint logic without RNG state
+  - shared checkpoint utility with RNG capture + per-step throughput/memory metrics
+- **Decision**: implement shared checkpoint helpers (`save_training_checkpoint`, `load_training_checkpoint`) and add per-step timing/throughput/peak-memory logs in latent/pixel train scripts.
+- **Rationale**: standardizes resume behavior across stages and enables objective profiling comparisons from JSON logs.
+- **Validation evidence**: `tests/integration/test_checkpoint_resume.py`, updated smoke integration tests, and profiled MAE queue run artifacts.
+- **Residual risk**: optimizer/scheduler parity is covered for current scripts; future schedulers must be included explicitly.
+- **Follow-up action**: add checkpoint schema versioning and periodic integrity checks.
+
+- **ID**: DEC-0010
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-5 latent pipeline needed practical scaling controls (AMP, grad accumulation, scheduler, EMA) with reproducible resume behavior.
+- **Options considered**:
+  - keep fixed fp32 single-step optimizer updates
+  - add configurable precision/accumulation/scheduler/EMA and store these states in checkpoints
+- **Decision**: enable `precision`, `grad_accum_steps`, scheduler variants (`none/constant/cosine/warmup_cosine`), EMA tracking, and resume mismatch guard based on a normalized config fingerprint.
+- **Rationale**: this supports scalable runs while preventing accidental incompatible resume operations.
+- **Validation evidence**: `tests/integration/test_latent_amp_accum_smoke.py`, `tests/integration/test_latent_ema_checkpoint.py`, `tests/integration/test_resume_mismatch_guard.py`, and CUDA latent smoke artifacts.
+- **Residual risk**: EMA is tracked but not yet evaluated with separate EMA-sampled checkpoints in metric scripts.
+- **Follow-up action**: add explicit EMA-vs-online model evaluation hooks in ablation runner.
+
+- **ID**: DEC-0011
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Queue robustness required structured warmup/refill/coverage behavior and broader provider backend options.
+- **Options considered**:
+  - keep random warmup and per-step refill only
+  - add class-balanced warmup mode, refill policies, underflow accounting, and provider backends (`imagefolder`, `tensor_file`, optional `webdataset`)
+- **Decision**: implement class-balanced warmup/reporting, refill policy controls, underflow counters, and expanded provider backends with manifest fingerprinting.
+- **Rationale**: creates auditable queue behavior and reduces silent failure modes during class-conditional sampling.
+- **Validation evidence**: `tests/integration/test_queue_warmup.py`, `tests/unit/test_data_provider.py`, and queue-enabled train script outputs.
+- **Residual risk**: webdataset path remains optional and depends on external package installation.
+- **Follow-up action**: add CI path with webdataset enabled and real shard smoke data.
+
+- **ID**: DEC-0012
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-7 needed a direct path to consume MAE encoder exports during pixel feature-loss runs.
+- **Options considered**:
+  - keep MAE feature encoder randomly initialized in pixel script
+  - load full MAE checkpoint payloads only
+  - load encoder-only exports and support checkpoint-derived `encoder.*` extraction
+- **Decision**: add `--mae-encoder-path` to `scripts/train_pixel.py` and support loading from MAE export payloads (`encoder_state_dict`) or checkpoint/model dicts containing `encoder.*` keys.
+- **Rationale**: enables explicit MAE pretrain->pixel transfer path and reduces coupling between MAE/pixel script internals.
+- **Validation evidence**: `tests/integration/test_pixel_mae_encoder_load.py` plus artifacts in `outputs/stage7_mae_encoder_for_pixel` and `outputs/stage7_pixel_mae_encoder_load_smoke`.
+- **Residual risk**: current loader validates unexpected keys but does not enforce strict architecture compatibility checks beyond state-dict load behavior.
+- **Follow-up action**: add optional strict config compatibility guard (`in_channels`, `base_channels`, `stages`) against exported MAE config metadata.
+
+- **ID**: DEC-0013
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-8 lacked a concrete FID/IS evaluation entrypoint with reusable metric primitives and artifact outputs.
+- **Options considered**:
+  - defer evaluation until full ImageNet training is ready
+  - add minimal ad-hoc script without reusable metrics
+  - add reusable eval metrics module + script supporting dataset/tensor sources
+- **Decision**: implement `drifting_models.eval.metrics` and `scripts/eval_fid_is.py` with FID and Inception Score computation, deterministic loaders, and JSON output.
+- **Rationale**: closes a major reproducibility gap early and allows progressive evaluation wiring before full-scale runs.
+- **Validation evidence**: `tests/unit/test_eval_metrics.py`, `tests/integration/test_eval_fid_is_smoke.py`, and `outputs/stage8_eval_smoke/eval_summary.json`.
+- **Residual risk**: `--inception-weights none` is useful for smoke tests but does not produce standard-quality FID/IS values.
+- **Follow-up action**: add reference protocol configs and pretrained-weight evaluation runs on real datasets.
+
+- **ID**: DEC-0014
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: MAE export loading in pixel training needed clearer failure modes for architecture mismatches.
+- **Options considered**:
+  - rely only on `load_state_dict` runtime mismatch errors
+  - validate exported MAE config metadata (`in_channels`, `base_channels`, `stages`) before loading
+- **Decision**: add explicit config compatibility validation when `--mae-encoder-path` points to export payloads with config metadata.
+- **Rationale**: surfaces actionable errors immediately and prevents silent partial-load behavior when dimensions differ.
+- **Validation evidence**: `tests/integration/test_pixel_mae_encoder_mismatch.py` and full suite pass.
+- **Residual risk**: non-export payloads without config metadata still rely on state-dict compatibility behavior.
+- **Follow-up action**: add optional strict flag to require config metadata for all MAE encoder loads.
+
+- **ID**: DEC-0015
+- **Date**: 2026-02-10
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Queue-mode training uses optional unconditional negatives with a weight derived from CFG alpha. When the unconditional weight is exactly zero (alpha=1), unconditional negatives should be effectively disabled without destabilizing the drift computation.
+- **Options considered**:
+  - represent zero unconditional weight as `-inf` log-weights (hard exclude)
+  - represent zero unconditional weight as a very negative finite log-weight (soft exclude)
+  - omit unconditional negatives entirely when weight is zero (dynamic tensor shapes)
+- **Decision**: represent zero unconditional weight with a very negative finite log-weight (`torch.finfo(dtype).min`) so unconditional negatives contribute ~0 mass while keeping affinity softmax numerically stable under x-normalization.
+- **Rationale**: column-wise softmax with all `-inf` logits can yield NaNs; finite-min preserves “effectively excluded” behavior while keeping a fixed negative tensor shape.
+- **Validation evidence**: `tests/unit/test_drift_field.py` and successful real-data queue run at `alpha=1.0` under `outputs/milestone70/cfg_pixel_alpha1/`.
+- **Residual risk**: unconditional negatives receive a tiny non-zero mass due to finite approximations; should be negligible for practical temperatures.
+- **Follow-up action**: if this becomes material at scale, switch to conditional omission of unconditional negatives when weight is zero.
+
+- **ID**: DEC-0016
+- **Date**: 2026-02-10
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-4 CFG/alpha behavior needs reproducible and non-flaky experiments for debugging and ablations.
+- **Options considered**:
+  - keep alpha sampling hard-coded (uniform in [1, 4])
+  - support `--alpha-fixed` only
+  - support `--alpha-fixed` plus uniform bounds (`--alpha-min/--alpha-max`)
+- **Decision**: add `--alpha-fixed` (deterministic) and `--alpha-min/--alpha-max` (uniform bounds) to both `scripts/train_pixel.py` and `scripts/train_latent.py`, and record `alpha_stats` in the output summaries.
+- **Rationale**: makes CFG sweeps and queue-mode debugging repeatable while preserving the ability to run randomized alpha training.
+- **Validation evidence**: `tests/integration/test_queue_unconditional_usage.py` covers the queue + unconditional path with fixed alpha and asserts non-zero unconditional mass at `alpha=3.0`.
+- **Residual risk**: none; it is an additive control surface.
+- **Follow-up action**: add richer alpha distributions if the paper specifies one (e.g., log-uniform or piecewise schedules).
+
+- **ID**: DEC-0017
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: The paper’s default latent protocol uses the “standard SD-VAE tokenizer” producing a 32×32×4 latent space for 256×256 images.
+- **Options considered**:
+  - keep the placeholder conv decoder/encoder path and treat latent protocol as “shape-only”
+  - integrate an actual SD-VAE via `diffusers` for encode/decode
+- **Decision**: integrate SD-VAE support via optional deps (`--extra sdvae`) and use a Stable Diffusion VAE checkpoint (`stabilityai/sd-vae-ft-mse`) with the standard scaling factor (`0.18215`) as defaults.
+- **Rationale**: this makes the latent protocol materially closer to the paper and enables decode-to-pixels evaluation and feature-loss routing through the VAE decoder.
+- **Validation evidence**:
+  - SD-VAE export: `scripts/export_sd_vae_latents_tensor_file.py`
+  - SD-VAE decode: `drifting_models/features/vae.py` (`mode=sd_vae`)
+  - End-to-end CIFAR-10-upscaled latent run artifacts under `outputs/milestone80/latent_cifar_sdvae_short_*`
+- **Residual risk**: the exact SD-VAE checkpoint and scaling conventions used in the paper may differ; confirm Appendix A details and adjust defaults accordingly.
+- **Follow-up action**: add an explicit “paper tokenizer config” section in `docs/reproduction_report.md` and lock tokenizer choice for ImageNet runs.
+
+- **ID**: DEC-0018
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: SD-VAE encoding can be stochastic (sampling from the posterior) or deterministic (using the mean).
+- **Options considered**:
+  - use stochastic `latent_dist.sample()` for closer ELBO-style sampling behavior
+  - use deterministic `latent_dist.mean` for reproducibility and stable dataset exports
+- **Decision**: default SD-VAE latent exports to deterministic encoding via `latent_dist.mean` (optionally switchable via `--latent-sampling sample` with an explicit seed).
+- **Rationale**: dataset exports should be reproducible and diff-minimizing; stochastic encoding adds unnecessary variance for pipeline validation and regression testing.
+- **Validation evidence**: successful 10k latent export written to `outputs/datasets/cifar10_val_sdvae_latents.pt` with stable tensor shape 10k×4×32×32.
+- **Residual risk**: if the paper encodes with posterior sampling, deterministic exports may shift downstream metrics slightly.
+- **Follow-up action**: once ImageNet protocol is in place, run a small ablation comparing mean vs sample encoding and record the delta.
+
+- **ID**: DEC-0019
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: SD-VAE expects 256×256 inputs to produce 32×32 latents; CIFAR-10 images are 32×32.
+- **Options considered**:
+  - restrict SD-VAE latent testing to ImageNet only (requires dataset availability)
+  - validate SD-VAE latent wiring by upscaling CIFAR-10 to 256×256 before encoding
+- **Decision**: for protocol wiring validation, upscale CIFAR-10 val images to 256×256, encode to 32×32×4 SD-VAE latents, and run the latent trainer/evaluator against that export.
+- **Rationale**: allows end-to-end latent protocol validation (encode -> train -> sample -> decode -> FID/IS) without requiring ImageNet availability.
+- **Validation evidence**:
+  - Reference export: `outputs/datasets/cifar10_val_256`
+  - Latent export: `outputs/datasets/cifar10_val_sdvae_latents.pt`
+  - Comparable eval: `outputs/milestone80/latent_cifar_sdvae_short_eval/eval_pretrained.json`
+- **Residual risk**: upscaling CIFAR is not the paper’s data regime; treat results as wiring validation only.
+- **Follow-up action**: repeat the same pipeline on ImageNet val once the dataset protocol is available.
+
+- **ID**: DEC-0020
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: The paper’s best latent protocol relies on a latent-MAE feature encoder trained on SD-VAE latents; the repo’s MAE scaffold initially trained only on synthetic latents.
+- **Options considered**:
+  - keep MAE as a synthetic-only scaffold and defer real-data integration until ImageNet is available
+  - add real-data ingestion to MAE pretraining using the same `RealBatchProvider` stack as the drifting trainers
+- **Decision**: extend `scripts/train_mae.py` and `drifting_models/train/mae.py` to optionally consume real batches via `RealBatchProvider` (e.g., `tensor_file` SD-VAE latents) and export an encoder-only artifact.
+- **Rationale**: aligns MAE pretraining plumbing with the paper’s intended data regime and makes the MAE encoder usable as a drop-in feature extractor for latent drifting experiments.
+- **Validation evidence**:
+  - Real-latent MAE run: `outputs/milestone80/mae_cifar_sdvae_short/mae_summary.json`
+  - Encoder export: `outputs/milestone80/mae_cifar_sdvae_short/mae_encoder.pt`
+- **Residual risk**: this is not yet a paper-scale MAE (epochs/batch size/augmentations differ substantially); quality impact must be validated in downstream drifting runs.
+- **Follow-up action**: wire the exported MAE encoder into `scripts/train_latent.py` feature-loss path and run a controlled tiny-vs-MAE ablation.
+
+- **ID**: DEC-0021
+- **Date**: 2026-02-09
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Latent drifting feature loss needs to support the paper’s latent-MAE feature space in addition to the tiny encoder scaffold.
+- **Options considered**:
+  - keep latent feature extraction limited to `TinyFeatureEncoder`
+  - add `LatentResNetMAE` as a selectable feature encoder and allow loading encoder-only exports
+- **Decision**: add `--feature-encoder {tiny,mae}` and `--mae-encoder-path` to `scripts/train_latent.py`, with export-config compatibility checks matching the pixel trainer.
+- **Rationale**: enables controlled ablations (tiny vs latent-MAE) and a direct path to reproduce Table-3 style trends once ImageNet latents are available.
+- **Validation evidence**: `tests/integration/test_latent_mae_encoder_load.py` plus successful MAE export via `scripts/train_mae.py`.
+- **Residual risk**: MAE training recipe is still a scaffold (not paper-scale); downstream quality impact is unverified.
+- **Follow-up action**: run a short controlled latent run with `--use-feature-loss --feature-encoder mae` on SD-VAE latents and evaluate with pretrained Inception.
+
+- **ID**: DEC-0022
+- **Date**: 2026-02-10
+- **Owner**: Codex
+- **Category**: PAPER-BACKED
+- **Context**: Table 8 specifies non-uniform training-time CFG `alpha` sampling distributions (including power-laws and a 50% point-mass at `alpha=1` for the L/2 latent model).
+- **Options considered**:
+  - keep uniform `alpha ~ U([1,4])` (simple, but not paper-faithful)
+  - implement Table 8 `p(alpha)` choices (power-law and mixture distributions)
+- **Decision**: add configurable alpha sampling distributions:
+  - `uniform` (default, backward compatible)
+  - `powerlaw` (`p(alpha) ∝ alpha^-k` over `[alpha_min, alpha_max]`)
+  - `table8_l2_latent` (alias of `mixture_point_powerlaw`: 50% `alpha=1`, 50% `p(alpha) ∝ alpha^-3`)
+- **Rationale**: alpha sampling is part of the paper’s training algorithm; matching it is a low-cost, high-leverage fidelity improvement before scaling to ImageNet.
+- **Validation evidence**: `tests/unit/test_alpha_sampling.py` and `uv run pytest` green.
+- **Residual risk**: exact `alpha` embedding and any additional per-model variations (e.g., `alpha^-5` for pixel configs) still need ImageNet-scale validation.
+- **Follow-up action**: add ImageNet configs that match Table 8 per column (including `alpha^-5` where specified) and run alpha-sweep sanity on an ImageNet subset.
+
+- **ID**: DEC-0023
+- **Date**: 2026-02-10
+- **Owner**: Codex
+- **Category**: PAPER-BACKED
+- **Context**: Table 8 specifies using multiple kernel temperatures `τ ∈ {0.02, 0.05, 0.2}` and Appendix A.6 describes summing normalized drift fields over temperatures before applying the stop-grad target loss.
+- **Options considered**:
+  - sum drifts across temperatures and compute a single MSE (`sum_drifts_then_mse`)
+  - compute one stop-grad drifting loss per temperature and aggregate (`per_temperature_mse`)
+- **Decision**:
+- **Decision**:
+  - treat `sum_drifts_then_mse` as the paper-faithful default for feature-space drifting runs
+  - keep `per_temperature_mse` as an explicit ablation mode
+  - keep optional multi-temperature raw drifting loss support via `drifting_stopgrad_loss_multi_temperature`
+  - expose `--drift-temperatures` and `--drift-temperature-reduction` in pixel/latent trainers
+- **Rationale**: this aligns the default configuration contract and documentation with Appendix A.6 language while preserving an ablation path for alternative aggregation behavior.
+- **Validation evidence**: `uv run python -m pytest -q` green after change.
+- **Residual risk**: exact paper loss aggregation (sum vs mean) may differ by a constant scaling factor; `--drift-temperature-reduction` allows explicit control.
+- **Follow-up action**: set Table 8 configs to use `drift-temperatures: [0.02, 0.05, 0.2]` and run an ImageNet subset smoke to confirm stability.
+
+- **ID**: DEC-0024
+- **Date**: 2026-02-10
+- **Owner**: Codex
+- **Category**: PROTOCOL
+- **Context**: The ImageNet latent protocol requires decoding SD-VAE latents (32x32x4) back to RGB for evaluation. `scripts/sample_latent.py --decode-mode sd_vae` requires an HF model id to load the decoder.
+- **Options considered**:
+  - require always-explicit `--sd-vae-model-id` (max explicitness, but easy to forget in orchestrators)
+  - set a standard default model id in orchestrators while keeping `sample_latent.py` strict (explicit + robust)
+- **Decision**: use `stabilityai/sd-vae-ft-mse` as the default SD-VAE model id in the ImageNet latent pipeline runner and runbook commands; keep `sample_latent.py` strict and fail fast if `--decode-mode sd_vae` is requested without a model id.
+- **Rationale**: `stabilityai/sd-vae-ft-mse` is a widely used SD VAE checkpoint and is public; passing it explicitly in the pipeline makes runs reproducible and prevents silent drift.
+- **Validation evidence**: successful ImageNet smoke sample+decode+pretrained-Inception eval with `sd_vae_model_id=stabilityai/sd-vae-ft-mse` (see `docs/experiment_log.md` entry `imagenet_latent_smoke_mae_eval_pretrained-20260210-183641`).
+- **Residual risk**: the paper may have used a different SD-VAE revision/variant (e.g., EMA); if paper explicitly names one later, update and rerun for parity.
+- **Follow-up action**: if/when scaling, plumb `--sd-vae-revision` and/or a pinned commit hash into the runbook for exact reproducibility across time.
+
+- **ID**: DEC-0025
+- **Date**: 2026-02-11
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Stage-6 MAE follow-up required choosing a practical default feature encoder variant for the next latent scaling pass (`w64`, `w96`, and `w64+clsft` were available).
+- **Options considered**:
+  - keep `w64` as default and treat wider MAE as optional
+  - move default to `w96` based on controlled downstream latent eval
+  - promote `w64+clsft` if classifier fine-tuning improves short-horizon generation quality
+- **Decision**: use `w96` as the current default MAE feature encoder candidate for next-stage latent runs; keep `w64+clsft` as an ablation branch (not default).
+- **Rationale**: in a controlled short-run matrix (same latent trainer/eval protocol), `w96` achieved the best FID/IS (`FID≈362.33`, `IS≈1.3464`), while `w64+clsft` underperformed (`FID≈378.39`, `IS≈1.0000`).
+- **Validation evidence**:
+  - `outputs/imagenet/latent_mae_variant_impact/mae_variant_impact_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact/mae_variant_impact_summary.md`
+- **Residual risk**: this ranking is short-horizon (`30` train steps, `1k` eval samples) and may not hold at longer training horizons or larger sample counts.
+- **Follow-up action**: rerun the same matrix at longer horizon (>=100 steps) and larger eval sets (>=5k) before finalizing paper-scale defaults.
+
+- **ID**: DEC-0026
+- **Date**: 2026-02-11
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: DEC-0025 selected `w96` based on short-horizon MAE-variant impact. A longer-horizon rerun was required to validate stability of that ranking.
+- **Options considered**:
+  - keep `w96` as default (trust short-horizon trend)
+  - switch default to `w64` if longer-horizon evidence disagrees
+  - keep no default and defer until paper-scale
+- **Decision**: switch the working default MAE feature encoder back to `w64` for next latent scaling runs; keep `w96` and `w64_clsft` as ablation branches.
+- **Rationale**: in the longer-horizon controlled matrix (`steps=100`, `n_samples=5000`, pinned `cuda:1`), `w64` achieved best FID (`~369.78`) while `w96` regressed (`~475.05`).
+- **Validation evidence**:
+  - `outputs/imagenet/latent_mae_variant_impact_long100_s5k_cuda1/mae_variant_impact_summary.json`
+  - `outputs/imagenet/latent_mae_variant_impact_long100_s5k_cuda1/mae_variant_impact_summary.md`
+- **Residual risk**: absolute metrics remain far from paper-scale quality; this decision is about relative stability at current horizon, not final paper parity.
+- **Follow-up action**: repeat the ranking once longer latent training horizons (>=300 steps) are available and checkpoint trend evaluation has stabilized.
+
+- **ID**: DEC-0027
+- **Date**: 2026-02-13
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Step-600 latent continuation post-run diagnostics (`last-K`, alpha sweep, fixed-seed grids, NN audit) showed strong non-monotonic behavior with material quality collapse at the final checkpoint.
+- **Options considered**:
+  - treat `step=600` as the default continuation checkpoint and tune CFG alpha only
+  - roll forward with `step=550` as the working checkpoint while investigating late-run degradation causes
+  - discard this run family and restart from an earlier seed/config
+- **Decision**: use `step=550` as the working checkpoint for immediate follow-up diagnostics and quality recovery experiments; do not treat `step=600` as the scaling baseline.
+- **Rationale**: `last-K` showed best FID/IS at `step=550` (`FID≈286.16`, `IS≈1.3934`) with substantial regression by `step=600` (`FID≈390.61`, `IS≈1.0288`), and alpha sweep deltas at `step=600` were negligible.
+- **Validation evidence**:
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_lastk_eval_k4_s2k/last_k_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_alpha_sweep_s2k/alpha_sweep_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_fixed_seed_grids/fixed_seed_grid_summary.json`
+  - `outputs/imagenet/latent_ablation_b2_600_cuda1_w64_alpha_sweep_s2k/alpha_1p5/nn_audit.json`
+- **Residual risk**: this is still short-horizon and low-quality relative to paper targets; the root cause of late-checkpoint collapse is not yet isolated.
+- **Follow-up action**: run targeted ablations around optimizer schedule, queue mix, and feature-loss weighting to identify the failure mode driving post-550 degradation.
+
+- **ID**: DEC-0028
+- **Date**: 2026-02-13
+- **Owner**: Codex
+- **Category**: PROTOCOL
+- **Context**: Recovery post-run automation launched evaluation as soon as `checkpoint.pt` existed, which can race with checkpoint writes and produce intermittent `PytorchStreamReader` failures.
+- **Options considered**:
+  - keep waiting on mutable `checkpoint.pt` existence only
+  - gate on immutable step checkpoint files (e.g., `checkpoint_step_00000700.pt`) for evaluation launch
+- **Decision**: treat immutable step checkpoints as the evaluation trigger/target for automated post-run pipelines; do not use mutable `checkpoint.pt` as the readiness gate.
+- **Rationale**: step snapshots are atomically written terminal artifacts for a given step and avoid write/read races inherent to mutable latest-checkpoint files.
+- **Validation evidence**:
+  - failed chained run log: `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64/postrun_chain.log`
+  - clean rerun summary: `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_alpha_sweep_s2k_rerun/alpha_sweep_summary.json`
+- **Residual risk**: if a run crashes before the target step checkpoint is materialized, downstream chained evaluation will not start automatically.
+- **Follow-up action**: keep a polling helper that checks for specific terminal step files and optionally supports timeout/alerting.
+
+- **ID**: DEC-0029
+- **Date**: 2026-02-13
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: `--allow-resume-config-mismatch` enables continuation across config changes, but default resume restores optimizer/scheduler state, which can silently override intended LR/schedule ablation changes.
+- **Options considered**:
+  - keep current behavior and rely on manual checkpoint surgery for optimizer-reset runs
+  - add a first-class resume mode that loads model weights/step (and optional EMA) without optimizer/scheduler/rng restoration
+- **Decision**: add `--resume-model-only` to `scripts/train_latent.py` and use it for optimizer-reset ablations.
+- **Rationale**: this creates an explicit, auditable mechanism to isolate optimization-state effects from architecture/data effects when debugging late-training collapse.
+- **Validation evidence**:
+  - implementation: `scripts/train_latent.py`
+  - regression test: `tests/integration/test_checkpoint_resume.py::test_train_latent_resume_model_only_resets_optimizer_schedule`
+  - targeted test pass: `3 passed in 10.00s`
+- **Residual risk**: resetting optimizer may change convergence dynamics in ways that are not paper-equivalent; treat as diagnostic ablation, not final protocol.
+- **Follow-up action**: run a paired step-550 continuation matrix (default resume vs `--resume-model-only`) with identical seeds and post-run metrics.
+
+- **ID**: DEC-0030
+- **Date**: 2026-02-13
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: Recovery continuation from `step=550` showed poor quality when optimizer state was restored (`FID ~354`), despite similar architecture/data settings.
+- **Options considered**:
+  - continue default optimizer-restored resume for all recovery experiments
+  - run an optimizer-reset counterpart using `--resume-model-only` and compare under matched protocol
+- **Decision**: treat optimizer-state carryover as a primary suspect for late-run degradation and prioritize optimizer-reset recovery runs for diagnosis.
+- **Rationale**: under matched step horizon and evaluation protocol, optimizer-reset continuation improved FID from ~`354` to ~`332` and reduced NN similarity statistics (`mean_cosine ~0.33` -> `~0.19`).
+- **Validation evidence**:
+  - optimizer-restored branch: `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_alpha_sweep_s2k_rerun/alpha_sweep_summary.json`
+  - optimizer-reset branch: `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_modelonly_alpha_sweep_s2k/alpha_sweep_summary.json`
+  - NN audits:
+    - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_alpha_sweep_s2k_rerun/alpha_1p5/nn_audit.json`
+    - `outputs/imagenet/latent_recovery_from550_step700_cuda1_w64_modelonly_alpha_sweep_s2k/alpha_1p5/nn_audit.json`
+- **Residual risk**: this is still an ablation-horizon regime with low absolute IS/FID quality; results may shift at longer horizons and larger sample counts.
+- **Follow-up action**: run a controlled 2x2 matrix (optimizer reset on/off × lower LR on/off) and include last-K trend analysis to isolate which optimizer-state components dominate.
+
+- **ID**: DEC-0031
+- **Date**: 2026-02-13
+- **Owner**: Codex
+- **Category**: PROTOCOL
+- **Context**: The controlled 2x2 recovery matrix (optimizer restore vs model-only) × (low LR vs high LR) from `step=550 -> 700` completed and materially changes the best-known recovery policy.
+- **Options considered**:
+  - default to optimizer-reset (`--resume-model-only`) as the baseline recovery mode
+  - restore optimizer state but explicitly reset scheduler and override optimizer LR to a conservative resume LR
+- **Decision**: for `step=550 -> 700` recovery baselines, prefer restoring optimizer state with `--resume-reset-scheduler --resume-reset-optimizer-lr` and a conservative resume LR (currently `8e-5`), unless later evidence contradicts.
+- **Rationale**:
+  - the best variant in the 2x2 matrix is optimizer-restored with resets + low LR (`FID≈276.14` at `alpha=1.0`), materially outperforming the model-only reset at the same LR (`FID≈332.12` at `alpha=2.5`).
+  - high LR (`2e-4`) is consistently worse in this recovery window (both for optimizer-restored-with-resets and model-only modes).
+- **Validation evidence**:
+  - summary: `docs/imagenet_recovery_matrix_2x2_20260213_restart_r3_results.md`
+  - raw artifacts: `outputs/imagenet/recovery_matrix_2x2_20260213_restart_r3/`
+- **Residual risk**: results are still short-horizon and based on `2k` samples/alpha; longer-horizon results and larger eval sets could shift ordering.
+- **Follow-up action**: update the step-550 recovery runbook commands to use the recommended resume policy and re-run the best variant with a larger eval set if needed for confidence.
+
+- **ID**: DEC-0032
+- **Date**: 2026-02-14
+- **Owner**: Codex
+- **Category**: PROTOCOL
+- **Context**: The latent protocol depends on SD‑VAE weights loaded via `diffusers` (`AutoencoderKL.from_pretrained`). If we do not pin a model revision, runs can silently change over time as the upstream repo updates.
+- **Options considered**:
+  - keep `revision=None` everywhere (“latest”), relying on caches (not reproducible across machines/time)
+  - require always-explicit `--sd-vae-revision` in every command (max explicitness, higher operator burden)
+  - pin a default commit SHA in all SD‑VAE entrypoints and runbooks, while still allowing overrides
+- **Decision**: pin SD‑VAE to revision `31f26fdeee1355a5c34592e401dd41e45d25a493` by default in the relevant scripts, and include it explicitly in ImageNet runbooks.
+- **Rationale**: this is the minimal change that makes SD‑VAE usage deterministic across time without adding new required flags.
+- **Validation evidence**:
+  - provenance doc: `docs/sdvae_provenance.md`
+  - provenance capture script: `scripts/capture_sdvae_provenance.py`
+  - runbook updates: `docs/imagenet_runbook.md`
+- **Residual risk**: downstream environments could still load different weights if HF cache is corrupted or a different revision is forced; capture file hashes via `scripts/capture_sdvae_provenance.py` for high-stakes runs.
+
+- **ID**: DEC-0033
+- **Date**: 2026-02-14
+- **Owner**: Codex
+- **Category**: PROTOCOL
+- **Context**: The training entrypoints (`scripts/train_latent.py`, `scripts/train_pixel.py`) do not implement distributed training (DDP/FSDP) semantics. In particular, queue-based sampling and drift-field estimation are not defined for multi-process execution without an explicit cross-rank design.
+- **Options considered**:
+  - implement full DDP correctness (cross-rank negative pools, synchronized queue, consistent estimator) + add tests
+  - enforce single-process execution by refusing `WORLD_SIZE>1` runs
+- **Decision**: enforce **single-process only** in the training entrypoints for now; if `WORLD_SIZE>1`, the scripts fail fast with a clear error.
+- **Rationale**: prevents silent “looks like it ran” failures where each rank trains an inconsistent objective and produces non-comparable artifacts.
+- **Validation evidence**:
+  - integration test: `tests/integration/test_distributed_guard.py`
+  - implementation: `scripts/train_latent.py`, `scripts/train_pixel.py`
+- **Residual risk**: paper-scale runs that require multiple GPUs cannot be executed until a DDP strategy is implemented and validated.
+
+- **ID**: DEC-0034
+- **Date**: 2026-02-14
+- **Owner**: Codex
+- **Category**: INFERRED
+- **Context**: The paper specifies a DiT-style transformer using SwiGLU, but does not specify the FFN intermediate dimension. The paper reports generator parameter counts (Table 5), which strongly constrain the intended FFN sizing.
+- **Options considered**:
+  - set SwiGLU `inner_dim = hidden_dim * mlp_ratio` (increases FFN params by ~1.5× vs a standard MLP at the same ratio)
+  - set SwiGLU `inner_dim = (2/3) * hidden_dim * mlp_ratio` (matches the parameter budget of a standard MLP at the same ratio)
+  - support an explicit `ffn_inner_dim` override and choose values that match the paper-reported parameter counts
+- **Decision**: add `DiTLikeConfig.ffn_inner_dim` (optional) and expose it in Table-8 configs (`ffn-inner-dim`) so we can match the paper-reported generator parameter counts tightly; default behavior uses the 2/3 scaling when `ffn_inner_dim` is not provided.
+- **Rationale**: keeps the architecture configurable while allowing strict paper parity to be enforced via configs; avoids accidentally drifting from the paper’s stated model sizes.
+- **Validation evidence**:
+  - `uv run python scripts/report_ditlike_params.py --hidden-dim 768 --depth 12 --num-heads 12 --use-qk-norm --use-rope --ffn-inner-dim 2184` ⇒ `133,088,720` params (≈ `133M`)
+  - `uv run python scripts/report_ditlike_params.py --hidden-dim 1024 --depth 24 --num-heads 16 --use-qk-norm --use-rope --ffn-inner-dim 2824` ⇒ `462,922,384` params (≈ `463M`)
+- **Residual risk**: the paper could be using a different convention for counting parameters or a different rounding rule for intermediate dims; this decision matches reported totals but may still differ in micro-architecture details.
+- **Follow-up action**: if appendix details about FFN sizing are found, replace the inferred override with explicit paper-backed settings.
+
+- **ID**: DEC-0035
+- **Date**: 2026-02-15
+- **Owner**: Codex
+- **Category**: PROTOCOL
+- **Context**: Paper Table 8 uses large effective batches (e.g., latent columns: `B = N_c × N_seg = 8192`) and long horizons (e.g., 200k steps), and the repo currently enforces single-process training (DEC-0033). This host exposes a single GPU (`cuda:0`).
+- **Options considered**:
+  - implement/validate a DDP strategy (cross-rank queue + synchronized estimators), then run paper-scale as written
+  - run single-GPU with smaller grouped-batch sizes that fit memory, and document as “closest feasible” with explicit deltas
+- **Decision**: use **single-GPU** runs on this host and treat paper-scale Table‑8 training as “closest feasible” unless/until a validated DDP strategy exists; select the largest grouped-batch that fits memory (using the Table‑8 proxy benchmark) while keeping the paper’s *ratios* (`N_pos`, `N_seg`, `N_uncond`) and alpha sampling behavior, then document the deviation.
+- **Rationale**: preserves objective structure and parity-critical semantics while staying honest about hardware limits; avoids invalid multi-process runs that would silently change queue semantics.
+- **Validation evidence**:
+  - DDP guard: `tests/integration/test_distributed_guard.py` + `scripts/train_latent.py`
+  - readiness benchmark: `scripts/run_latent_table8_benchmark.py` artifacts under `outputs/imagenet/benchmarks/`
+- **Residual risk**: scaling behavior may be non-linear in grouped-batch size and queue dynamics; results may not match the paper’s absolute FID/IS even if code semantics match.
+- **Follow-up action**: if paper-scale parity is required, implement and validate a DDP strategy for queue-backed grouped sampling.
+
+- **ID**: DEC-0036
+- **Date**: 2026-02-19
+- **Owner**: Codex
+- **Category**: SEMANTIC-PARITY
+- **Context**: P2 critique identified semantic divergences in queue labeling, feature-loss reduction, feature normalization, and evaluation-contract provenance handling.
+- **Semantic choices fixed**:
+  - queue warmup/backfill now uses true-label sampling only (no synthetic relabel path),
+  - faithful latent templates pin `feature-loss-term-reduction: sum` and `include-input-x2-mean: true`,
+  - normalization scale incorporates both positive and negative vectors, with optional unconditional weighting,
+  - evaluation now enforces reference-stats contract hash/provenance by default.
+- **Rationale**: these are parity-critical semantics that can silently invalidate paper-faithful claims if left ambiguous.
+- **Validation evidence**:
+  - queue integrity + deterministic warmup tests: `tests/unit/test_queue_label_integrity.py`
+  - feature reduction/normalization tests: `tests/unit/test_feature_drift_loss.py`
+  - faithful-config contract test: `tests/unit/test_table8_faithful_config_contract.py`
+  - eval contract/provenance tests: `tests/integration/test_eval_fid_is_cache_roundtrip.py`, `tests/integration/test_cache_reference_stats_smoke.py`
+- **Residual risk**: mini-long-run evidence (`D2 rung4`) still pending; final faithfulness claim remains gated on that run and release checklist closure.
+
+- **ID**: DEC-0037
+- **Date**: 2026-02-20
+- **Owner**: Codex
+- **Category**: SEMANTIC-PARITY
+- **Context**: Critique identified a parity risk in queue sampling: paper-facing runs should not silently fall back to replacement sampling when queues are underfilled for requested positive/unconditional counts.
+- **Options considered**:
+  - keep current fallback (sample with replacement on underflow)
+  - always enforce no-replacement globally (risking widespread run breakage on exploratory configs)
+  - add an explicit strict no-replacement mode for paper-facing runs, with clear fail-fast behavior and compatibility guards
+- **Decision**: add `--queue-strict-without-replacement` to latent/pixel training scripts and `QueueConfig.strict_without_replacement` in queue internals. In strict mode, queue sampling fails fast when requested counts exceed available queue contents; training now proactively backfills requested labels to a required per-class minimum (`required_count=positives_per_group`) before grouped sampling.
+- **Rationale**: this preserves backward-compatible exploratory behavior while enabling paper-facing runs to enforce the no-replacement contract explicitly.
+- **Validation evidence**:
+  - queue strict-mode tests: `tests/unit/test_data_queue.py`, `tests/integration/test_queue_strict_mode.py`
+  - required-count backfill tests: `tests/unit/test_queue_label_integrity.py`
+  - faithful config contract: `tests/unit/test_table8_faithful_config_contract.py`
+- **Residual risk**: strict mode can stall/fail on highly imbalanced or low-throughput real-batch sources; this is expected and surfaced as a hard parity signal.
+- **Follow-up action**: keep strict mode enabled for paper-facing templates and treat any strict-mode underflow failures as data-pipeline readiness blockers, not as reasons to relax semantics.
+
+- **ID**: DEC-0038
+- **Date**: 2026-02-20
+- **Owner**: Codex
+- **Category**: CLAIM-SCOPE
+- **Context**: Several remaining open/ambiguous decisions are not all closable within the current run window, but leaving them implicit creates claim ambiguity.
+- **Options considered**:
+  - postpone all unresolved decisions silently until final report pass
+  - force-close all unresolved decisions now without evidence
+  - explicitly classify each unresolved item as `closed` or `deferred-with-impact` and tie this to claim scope gates
+- **Decision**: add explicit closure tracking in `docs/decision_closure_status.md` and treat all unresolved items as **deferred-with-impact** until evidence-backed closure. Keep Tier-A faithfulness claims gated on these rows.
+- **Rationale**: avoids silent overclaiming while preserving execution momentum on evidence-producing runs.
+- **Validation evidence**:
+  - closure status tracker: `docs/decision_closure_status.md`
+  - claim gate docs: `docs/release_gate_checklist.md`, `docs/reproduction_report.md`
+- **Residual risk**: deferred decisions still limit maximum claim strength until fully resolved with targeted experiments.
+- **Follow-up action**: close deferred rows as each receives code/tests/artifacts; update status table and report language in lockstep.
+
+- **ID**: DEC-0039
+- **Date**: 2026-02-20
+- **Owner**: Codex
+- **Category**: CLAIM-SCOPE
+- **Context**: Pixel-path paper-faithfulness closure requires additional implementation and evidence gates that are not yet complete.
+- **Options considered**:
+  - continue presenting pixel path as paper-faithful
+  - remove pixel path from scope entirely
+  - keep pixel path in scope but explicitly mark it experimental/closest-feasible until closure gates finish
+- **Decision**: keep pixel path in scope as **experimental/closest-feasible** and defer paper-faithful pixel claims until closure gates are completed.
+- **Rationale**: preserves ongoing engineering progress while preventing claim overreach.
+- **Validation evidence**:
+  - scope status doc: `docs/pixel_scope_status.md`
+  - table map caveat: `docs/table8_config_map.md`
+  - report wording: `docs/reproduction_report.md`
+- **Residual risk**: users may over-interpret interim pixel numbers unless documentation remains explicit.
+- **Follow-up action**: close deferred pixel gates (`G4.1..G4.4`) and then promote scope wording.
+
+- **ID**: DEC-0040
+- **Date**: 2026-02-23
+- **Owner**: Codex
+- **Category**: SEMANTIC-PARITY
+- **Context**: P4 faithfulness review identified a remaining Table-8 parity gap in faithful latent templates: B/2 and L/2 templates still pointed to width-64 MAE settings/paths, while the scanned paper Table-8 row (`ResNet: base width`) specifies `256` for ablation-default and `640` for B/2 and L/2.
+- **Options considered**:
+  - keep width-64 paths in faithful templates until wider MAE checkpoints exist
+  - mark width as unresolved and remove width expectations from faithful contracts
+  - pin faithful templates to Table-8 width fields now (`256`/`640`) and require matching MAE export provenance before claim promotion
+- **Decision**: pin faithful Table-8 latent templates to Table-8 MAE width values and matching export-path expectations:
+  - ablation-default: `feature-base-channels: 256`, `mae-encoder-path` contains `w256`
+  - B/2 and L/2: `feature-base-channels: 640`, `mae-encoder-path` contains `w640`
+  and enforce these in faithful-template contract tests.
+- **Rationale**: this removes a claim-critical template ambiguity and prevents accidental use of under-width MAE encoders in runs labeled as faithful-template.
+- **Validation evidence**:
+  - paper scan width row: `Drift_Models/Drift_Models.md` (`Table 8`, `ResNet: base width`)
+  - template updates:
+    - `configs/latent/imagenet1k_sdvae_latents_table8_ablation_default_template.yaml`
+    - `configs/latent/imagenet1k_sdvae_latents_table8_b2_template.yaml`
+    - `configs/latent/imagenet1k_sdvae_latents_table8_l2_template.yaml`
+  - contract test hardening: `tests/unit/test_table8_faithful_config_contract.py`
+  - targeted validation: `uv run pytest -q tests/unit/test_table8_faithful_config_contract.py`
+- **Residual risk**: the scan can contain table extraction artifacts; if a clean PDF read or author code contradicts this width mapping, templates/contracts must be updated via a new explicit decision record.
+- **Follow-up action**: produce/import MAE exports matching the pinned widths (`w256`, `w640`) and record full provenance before promoting any faithful-template run claims.
+
+- **ID**: DEC-0041
+- **Date**: 2026-02-25
+- **Owner**: Codex
+- **Category**: OPS-COMPAT
+- **Context**: Runtime/device handling and compile behavior needed a single shared policy surface across scripts and CI, including explicit fallback semantics for non-first-class backends.
+- **Options considered**:
+  - keep distributed runtime/compile checks across entrypoints
+  - centralize only device detection and keep compile policy local
+  - centralize both runtime capability detection and compile fallback policy in one utility module
+- **Decision**: centralize runtime capability + compile fallback policy in `drifting_models/utils/device.py`, keep `runtime.py` as compatibility re-export, wire train/runtime preflight entrypoints to shared compile policy (`warn`/`raise`/`disable`), and publish explicit compatibility/triage docs.
+- **Rationale**: this eliminates duplicated behavior, makes backend handling auditable, and enables consistent operational semantics in CI and local runs.
+- **Validation evidence**:
+  - module and exports:
+    - `drifting_models/utils/device.py`
+    - `drifting_models/utils/runtime.py`
+    - `drifting_models/utils/__init__.py`
+  - entrypoint integrations:
+    - `scripts/runtime_preflight.py`
+    - `scripts/train_latent.py`
+    - `scripts/train_pixel.py`
+  - tests:
+    - `tests/unit/test_runtime_utils.py`
+    - `tests/unit/test_compile_toggle_helpers.py`
+    - `tests/integration/test_runtime_preflight_smoke.py`
+  - runtime artifact bundle:
+    - `outputs/runtime_preflight/closure/preflight_summary.md`
+    - `docs/ci_local_validation_20260225.md`
+- **Residual risk**: MPS/XPU compile behavior may evolve upstream; policy should be revised when backend maturity improves.
+- **Follow-up action**: periodically re-evaluate compile support tiers and promote/demote backend policy in `docs/compatibility_matrix.md`.
+
+- **ID**: DEC-0042
+- **Date**: 2026-02-25
+- **Owner**: Codex
+- **Category**: RELEASE-OPS
+- **Context**: Public launch readiness needed a concrete go/no-go decision after CI/CD, packaging, runtime policy, and documentation hardening.
+- **Options considered**:
+  - full go immediately (publish/package/social launch now)
+  - no-go until additional internal hardening
+  - conditional go: technical release-ready, pending maintainer-controlled publish/post actions
+- **Decision**: **conditional go**. The repository is technically ready for release, but final closure remains blocked on maintainer-executed actions: PyPI/TestPyPI publish, Wave-1/Wave-2 post publication, and permalink logging.
+- **Rationale**: engineering quality gates are in place and validated locally; remaining blockers are account/permission-bound operational steps rather than implementation gaps.
+- **Validation evidence**:
+  - readiness snapshot: `docs/release_readiness_status_20260225.md`
+  - CI/local validation: `docs/ci_local_validation_20260225.md`
+  - claim audit: `docs/claim_boundary_audit_20260225.md`
+- **Residual risk**: launch messaging drift can still overstate faithfulness if post templates are not followed.
+- **Follow-up action**: execute Wave-1 and Wave-2 posts with tracked permalinks, then finalize release checklist closure.
