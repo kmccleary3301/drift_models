@@ -70,7 +70,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Download runtime preflight artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: runtime-preflight-*
           path: outputs/runtime_preflight_ci/collected
