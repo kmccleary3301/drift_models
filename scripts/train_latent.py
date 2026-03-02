@@ -216,34 +216,16 @@ def main() -> None:
                 if not args.allow_resume_config_mismatch:
                     raise
         if queue_resumed_from_checkpoint:
-            resume_covered_classes = _queue_covered_class_count(queue)
-            if resume_covered_classes < int(args.num_classes):
-                _prime_queue(
-                    queue=queue,
-                    provider=real_batch_provider,
-                    num_classes=args.num_classes,
-                    sample_count=args.queue_prime_samples,
-                    warmup_mode=args.queue_warmup_mode,
-                    warmup_min_per_class=args.queue_warmup_min_per_class,
-                    device=device,
-                )
-                queue_warmup_report = _build_queue_warmup_report(
-                    queue=queue,
-                    warmup_mode=f"resume_reprime_{args.queue_warmup_mode}",
-                    samples_pushed=args.queue_prime_samples,
-                    report_level=str(args.queue_report_level),
-                )
-                queue_warmup_report["resume_initial_covered_classes"] = float(resume_covered_classes)
-            else:
-                queue_warmup_report = {
-                    "mode": "resume_restore",
-                    "samples_pushed": 0.0,
-                    "report_level": str(args.queue_report_level),
-                    "min_count": float(min(queue.class_counts(), default=0)),
-                    "max_count": float(max(queue.class_counts(), default=0)),
-                    "global_count": float(queue.global_count()),
-                    "covered_classes": float(resume_covered_classes),
-                }
+            queue_warmup_report = {
+                "mode": "resume_restore",
+                "warmup_mode": "resume_restore",
+                "samples_pushed": 0.0,
+                "report_level": str(args.queue_report_level),
+                "min_count": float(min(queue.class_counts(), default=0)),
+                "max_count": float(max(queue.class_counts(), default=0)),
+                "global_count": float(queue.global_count()),
+                "covered_classes": float(_queue_covered_class_count(queue)),
+            }
         else:
             _prime_queue(
                 queue=queue,
