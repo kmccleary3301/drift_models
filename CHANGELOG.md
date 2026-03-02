@@ -13,21 +13,19 @@ The format is inspired by Keep a Changelog and this project uses semantic versio
 
 ## [Unreleased]
 
-### Added
-- Public release governance baseline:
-  - `LICENSE`
-  - `CONTRIBUTING.md`
-  - `CODE_OF_CONDUCT.md`
-  - `SECURITY.md`
-  - `CHANGELOG.md`
-- Publicity/release execution planning docs:
-  - `docs_tmp/socials/PUBLICITY_STRATEGY_V1_IMPLEMENTATION_PLAN.md`
+## [0.1.1] - 2026-03-02
+
+### Fixed
+- Stabilized latent queue resume reporting in `scripts/train_latent.py` so checkpoint resume emits a schema-consistent
+  `queue_warmup_report` (`mode=resume_restore`) and nightly checkpoint-resume integration tests pass again.
 
 ### Changed
-- Packaging metadata in `pyproject.toml`:
-  - broadened Python compatibility target,
-  - shifted heavy runtime deps into extras,
-  - added project metadata/classifiers/urls.
+- Slimmed git-tracked repository footprint by untracking large local-only paper convenience artifacts:
+  - `Drift_Models.pdf`
+  - `Drift_Models/Drift_Models.json`
+  and documenting this policy in `README.md`.
+- Hardened MAE width-parity export reliability on the current single-GPU host by adding MAE optimizer selection
+  support and running the `w640` bootstrap config with SGD to avoid AdamW optimizer-step OOM.
 
 ## [0.1.0] - 2026-02-24
 
