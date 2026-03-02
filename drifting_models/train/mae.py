@@ -39,6 +39,8 @@ class MAETrainConfig:
     weight_decay: float = 0.01
     adam_beta1: float = 0.9
     adam_beta2: float = 0.95
+    optimizer: str = "adamw"  # {"adamw","sgd"}
+    sgd_momentum: float = 0.9
     scheduler: str = "none"  # {"none","cosine","warmup_cosine"}
     warmup_steps: int = 0
     use_ema: bool = False
@@ -70,12 +72,24 @@ def run_mae_pretrain(
             )
         ).to(device)
     if optimizer is None:
-        optimizer = torch.optim.AdamW(
-            model.parameters(),
-            lr=config.learning_rate,
-            betas=(config.adam_beta1, config.adam_beta2),
-            weight_decay=config.weight_decay,
-        )
+        if config.optimizer == "adamw":
+            optimizer = torch.optim.AdamW(
+                model.parameters(),
+                lr=config.learning_rate,
+                betas=(config.adam_beta1, config.adam_beta2),
+                weight_decay=config.weight_decay,
+                foreach=False,
+            )
+        elif config.optimizer == "sgd":
+            optimizer = torch.optim.SGD(
+                model.parameters(),
+                lr=config.learning_rate,
+                momentum=config.sgd_momentum,
+                weight_decay=config.weight_decay,
+                nesterov=False,
+            )
+        else:
+            raise ValueError(f"Unsupported optimizer: {config.optimizer}")
     ema_model = ModelEMA.create(model=model, decay=float(config.ema_decay)) if config.use_ema else None
 
     logs: list[dict[str, float]] = []

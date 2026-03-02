@@ -65,6 +65,8 @@ def main() -> None:
         weight_decay=args.weight_decay,
         adam_beta1=args.adam_beta1,
         adam_beta2=args.adam_beta2,
+        optimizer=args.optimizer,
+        sgd_momentum=args.sgd_momentum,
         scheduler=args.scheduler,
         warmup_steps=args.warmup_steps,
         use_ema=args.use_ema,
@@ -84,12 +86,24 @@ def main() -> None:
             mask_patch_size=config.mask_patch_size,
         )
     ).to(device)
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=config.learning_rate,
-        betas=(config.adam_beta1, config.adam_beta2),
-        weight_decay=config.weight_decay,
-    )
+    if config.optimizer == "adamw":
+        optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=config.learning_rate,
+            betas=(config.adam_beta1, config.adam_beta2),
+            weight_decay=config.weight_decay,
+            foreach=False,
+        )
+    elif config.optimizer == "sgd":
+        optimizer = torch.optim.SGD(
+            model.parameters(),
+            lr=config.learning_rate,
+            momentum=config.sgd_momentum,
+            weight_decay=config.weight_decay,
+            nesterov=False,
+        )
+    else:
+        raise ValueError(f"Unsupported optimizer: {config.optimizer}")
     start_step = 0
     if args.resume_from is not None:
         payload = load_training_checkpoint(
@@ -263,6 +277,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--weight-decay", type=float, default=0.01)
     parser.add_argument("--adam-beta1", type=float, default=0.9)
     parser.add_argument("--adam-beta2", type=float, default=0.95)
+    parser.add_argument("--optimizer", choices=("adamw", "sgd"), default="adamw")
+    parser.add_argument("--sgd-momentum", type=float, default=0.9)
     parser.add_argument("--scheduler", choices=("none", "cosine", "warmup_cosine"), default="none")
     parser.add_argument("--warmup-steps", type=int, default=0)
     parser.add_argument("--use-ema", action="store_true")
@@ -502,6 +518,7 @@ def _run_classifier_finetune(
         lr=float(args.cls_ft_learning_rate),
         betas=(float(config.adam_beta1), float(config.adam_beta2)),
         weight_decay=float(args.cls_ft_weight_decay),
+        foreach=False,
     )
     logs: list[dict[str, float]] = []
     model.train()

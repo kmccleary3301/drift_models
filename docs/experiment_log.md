@@ -2414,3 +2414,31 @@ Track every run with enough metadata for exact replay.
 - **Notes / next action**:
   - publish Wave-1 and Wave-2 posts, then record permalinks in `docs_tmp/socials/PUBLICITY_KPI_DASHBOARD_V1.md`.
   - execute TestPyPI/PyPI publish flow and close remaining release checklist items.
+
+- **Run ID**: EXP-G3-LASTK-BUNDLE-20260226-155120
+- **Date**: 2026-02-26
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: /mnt/drive_4/research/drift_models/outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/config.yaml
+- **Hardware**: cuda:0
+- **Seed(s)**: 1337
+- **Objective**: Evaluate last-K step checkpoints with consistent sampling/eval settings
+- **Key toggles**: {"inception_weights": "pretrained", "k": 2, "mode": "latent", "n_samples": 2000, "reference_cache": false}
+- **Artifacts**:
+  - `/mnt/drive_4/research/drift_models/outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/claim_bundle/last_k_eval/last_k_summary.json`
+  - `/mnt/drive_4/research/drift_models/outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/claim_bundle/last_k_eval/last_k_summary.md`
+- **Outcome**: success
+- **Notes / next action**: postrun claim bundle for paperscale_b2_corrected_restart_nokernelcompile_20260219_152045
+
+- **Run ID**: EXP-G3-ALPHA-BUNDLE-20260226-155842
+- **Date**: 2026-02-26
+- **Code hash**: N/A (not a git repository)
+- **Config path + hash**: /mnt/drive_4/research/drift_models/outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/config.yaml
+- **Hardware**: cuda:0
+- **Seed(s)**: 1337
+- **Objective**: Sweep alpha values and record FID/IS per alpha
+- **Key toggles**: {"alphas": [1.0, 1.5, 2.0, 2.5, 3.0], "inception_weights": "pretrained", "mode": "latent", "n_samples": 2000, "reference_cache": false}
+- **Artifacts**:
+  - `/mnt/drive_4/research/drift_models/outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/claim_bundle/alpha_sweep/alpha_sweep_summary.json`
+  - `/mnt/drive_4/research/drift_models/outputs/imagenet/paperscale_b2_corrected_restart_nokernelcompile_20260219_152045/claim_bundle/alpha_sweep/alpha_sweep_summary.md`
+- **Outcome**: success
+- **Notes / next action**: postrun claim bundle for paperscale_b2_corrected_restart_nokernelcompile_20260219_152045
