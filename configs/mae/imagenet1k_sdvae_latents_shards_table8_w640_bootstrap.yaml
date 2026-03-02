@@ -28,6 +28,8 @@ learning-rate: 0.0001
 weight-decay: 0.01
 adam-beta1: 0.9
 adam-beta2: 0.95
+optimizer: sgd
+sgd-momentum: 0.9
 scheduler: warmup_cosine
 warmup-steps: 200
 use-ema: true

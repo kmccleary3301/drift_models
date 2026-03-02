@@ -22,6 +22,14 @@ See:
 - `docs/experiment_log.md`
 - `docs/eval_contract.md`
 
+## Paper artifact footprint
+
+- The repository tracks the markdown scan and figure assets under `Drift_Models/`.
+- Large convenience artifacts are intentionally untracked and gitignored:
+  - `Drift_Models.pdf`
+  - `Drift_Models/Drift_Models.json`
+- Keep those files locally if needed for planner/critique workflows, but do not commit them.
+
 ## Quickstart (60 seconds)
 
 ### Option A: `uv` (recommended)
