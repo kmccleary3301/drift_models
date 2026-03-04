@@ -14,19 +14,19 @@ Community PyTorch reproduction of [Generative Modeling via Drifting](https://arx
 
 ```
 drift_models/
-├── drifting_models/          # Core package
-│   ├── models/               # DiT-like architectures
-│   ├── train/                # Training loops & drift loss
-│   ├── eval/                 # FID/IS metrics
-│   ├── sampling/             # One-step generation
-│   └── utils/                # Helper utilities
-├── configs/                  # Training configurations
-│   ├── latent/               # Latent pipeline (primary)
-│   ├── pixel/                # Pixel pipeline (experimental)
-│   └── toy/                  # Quick sanity checks
-├── docs/                     # Documentation
-├── scripts/                  # Entry points
-└── dist/                     # PyPI releases
+├── 📦 drifting_models/       Core package (pip install drift-models)
+│   ├── models/               DiT-like generative architectures
+│   ├── train/                Training loops, drift loss, queue pipeline
+│   ├── eval/                 FID / Inception Score evaluation
+│   ├── sampling/             One-step image generation
+│   └── utils/                Device helpers, preflight, I/O
+├── ⚙️ configs/               YAML training configurations
+│   ├── latent/               Latent-space pipeline (primary)
+│   ├── pixel/                Pixel-space pipeline (experimental)
+│   └── toy/                  2D sanity-check distributions
+├── 📄 docs/                  Documentation & claim boundaries
+├── 🔧 scripts/               CLI entry points for train / eval / sample
+└── 📤 dist/                  PyPI release artifacts
 ```
 
 ---
@@ -101,11 +101,11 @@ The core idea is to push distribution evolution into the training phase so that 
 
 | Scope | Status |
 |-----------|-----------|
-| Community reproduction of the drifting objective | Active |
-| Mechanical faithfulness to the paper | Implemented |
-| Latent pipeline | Stable; parity hardening in progress |
-| Pixel pipeline | Experimental |
-| Full metric parity with paper | Pending long-horizon runs |
+| Community reproduction of the drifting objective | 🟢 Active |
+| Mechanical faithfulness to the paper | 🟢 Implemented |
+| Latent pipeline | 🟡 Stable; parity hardening in progress |
+| Pixel pipeline | 🟡 Experimental |
+| Full metric parity with paper | 🔴 Pending long-horizon runs |
 
 This is not official author code. See [Faithfulness Status](docs/faithfulness_status.md) for the full claim-to-evidence mapping.
 
@@ -115,11 +115,11 @@ This is not official author code. See [Faithfulness Status](docs/faithfulness_st
 
 | Platform | Tier | Accelerator | Status |
 |-------------|---------|---------------|-----------|
-| Linux | Primary | NVIDIA CUDA | Full support |
-| Linux | Primary | CPU | CI tested |
-| macOS | Secondary | Apple Silicon (MPS) | CI tested |
-| Windows | Secondary | WSL2 + CUDA | CI tested |
-| Windows | Secondary | Native CPU | CI tested |
+| Linux | Primary | NVIDIA CUDA | 🟢 Full support |
+| Linux | Primary | CPU | 🟢 CI tested |
+| macOS | Secondary | Apple Silicon (MPS) | 🟡 CI tested |
+| Windows | Secondary | WSL2 + CUDA | 🟡 CI tested |
+| Windows | Secondary | Native CPU | 🟡 CI tested |
 
 ---
 
