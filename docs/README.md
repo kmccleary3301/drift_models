@@ -1,6 +1,6 @@
-# Drifting Models Documentation
+# Documentation
 
-> Your guide to understanding, installing, and using Drifting Models.
+Reference documentation for the Drifting Models repository.
 
 ---
 
@@ -86,20 +86,12 @@
 
 ---
 
-## Need Help?
+## Quick Reference
 
 | Question | Resource |
 |-----------|-------------|
-| "Does my setup work?" | Run `scripts/runtime_preflight.py` |
-| "How do I...?" | Check [commands.md](commands.md) |
-| "Is this a bug?" | See [troubleshooting.md](troubleshooting.md) |
-| "Can I claim X?" | Read [faithfulness_status.md](faithfulness_status.md) |
-| "Want to contribute?" | See [CONTRIBUTING.md](../CONTRIBUTING.md) |
-
----
-
-<div align="center">
-
-**Start with [Getting Started](getting_started.md) or jump to [Commands](commands.md)**
-
-</div>
+| Does my setup work? | Run `scripts/runtime_preflight.py` |
+| Command syntax? | [commands.md](commands.md) |
+| Something broken? | [troubleshooting.md](troubleshooting.md) |
+| What can we claim? | [faithfulness_status.md](faithfulness_status.md) |
+| Want to contribute? | [CONTRIBUTING.md](../CONTRIBUTING.md) |

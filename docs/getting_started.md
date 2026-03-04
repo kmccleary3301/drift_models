@@ -1,10 +1,10 @@
 # Getting Started
 
-> Your first steps with Drifting Models — from zero to running in under 5 minutes.
+Setup and first-run instructions for the Drifting Models repository.
 
 ---
 
-## First 15 Minutes (Known-Good Path)
+## Known-Good Path
 
 ```bash
 # 1. Sync dependencies
@@ -20,8 +20,7 @@ uv run python scripts/train_toy.py --config configs/toy/quick.yaml --output-dir 
 uv run pytest -q tests/integration/test_stage2_smoke.py
 ```
 
-**Expected time:** ~2 minutes on CPU  
-**Expected output:** Training loss decreasing, final model saved to `outputs/toy_quick/`
+Expected time: ~2 minutes on CPU. Output: training loss decreasing, final model saved to `outputs/toy_quick/`.
 
 ---
 
@@ -76,7 +75,7 @@ uv run python scripts/runtime_preflight.py \
 
 | Exit Code | Meaning | Action |
 |:------------:|:-----------|:-----------|
-| `0` | All checks passed | Ready to train! |
+| `0` | All checks passed | Proceed to training |
 | `1` | Warning | Check logs, may proceed with caution |
 | `2` | Critical failure | Fix issues before training |
 
@@ -94,7 +93,7 @@ uv run python scripts/runtime_preflight.py \
 
 ## Toy Run (CPU)
 
-The fastest way to verify everything works:
+Minimal training run to verify the installation:
 
 ```bash
 uv run python scripts/train_toy.py \
@@ -129,7 +128,7 @@ uv run python scripts/train_pixel.py \
   --output-dir outputs/pixel_smoke
 ```
 
-**Note:** Pixel pipeline is experimental and should not be used for paper comparison.
+The pixel pipeline is experimental and should not be used for paper comparison.
 
 ---
 
@@ -191,8 +190,4 @@ uv run python scripts/sample.py \
 
 ---
 
-<div align="center">
-
-**Ready to dive in?** Check out [Commands](commands.md) for full training workflows!
-
-</div>
+For the full command catalog, see [Commands](commands.md).

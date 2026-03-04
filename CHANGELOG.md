@@ -57,8 +57,4 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). This project
 
 ---
 
-<div align="center">
-
-**Follow releases:** [Releases](https://github.com/kmccleary3301/drift_models/releases)
-
-</div>
+See all releases at [github.com/kmccleary3301/drift_models/releases](https://github.com/kmccleary3301/drift_models/releases).

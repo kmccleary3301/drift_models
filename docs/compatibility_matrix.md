@@ -1,6 +1,6 @@
 # Compatibility Matrix
 
-> Support tiers and platform compatibility for Drifting Models.
+Support tiers and platform compatibility for Drifting Models.
 
 ---
 
@@ -73,17 +73,4 @@
 
 ## Claim Boundaries
 
-> **Compatibility support ≠ paper-level metric parity**
-
-See also:
-- [faithfulness_status.md](faithfulness_status.md)
-- [reproduction_report.md](reproduction_report.md)
-- [eval_contract.md](eval_contract.md)
-
----
-
-<div align="center">
-
-**Platform support matrix complete** — choose your tier wisely!
-
-</div>
+Compatibility support does not imply paper-level metric parity. See [faithfulness_status.md](faithfulness_status.md), [reproduction_report.md](reproduction_report.md), and [eval_contract.md](eval_contract.md) for details.

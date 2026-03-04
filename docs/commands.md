@@ -1,6 +1,6 @@
-# Command Catalog
+# Command Reference
 
-> Complete reference for all training, evaluation, and utility commands.
+Complete reference for training, evaluation, and utility commands.
 
 ---
 
@@ -55,7 +55,7 @@ uv run pytest -q tests/integration/test_stage2_smoke.py
 
 ## Toy Training
 
-> Quick sanity checks — complete in ~2 minutes on CPU.
+Quick sanity checks — completes in ~2 minutes on CPU.
 
 | Config | Speed | Description |
 |-----------|---------|---------------|
@@ -75,7 +75,7 @@ uv run python scripts/train_toy.py \
 
 ## Latent Pipeline
 
-> Primary pipeline — trains in latent space (recommended).
+Primary pipeline — trains in latent space (recommended).
 
 ### Quick Start
 ```bash
@@ -147,7 +147,7 @@ uv run python scripts/train_latent.py \
 
 ## Pixel Pipeline
 
-> **Experimental** — Pixel-space training (not for paper comparison).
+Experimental pixel-space training. Not suitable for paper comparison.
 
 ```bash
 # Using config
@@ -190,7 +190,7 @@ uv run python scripts/train_pixel.py \
 
 ## MAE Training
 
-> Train Masked Autoencoder feature encoders.
+Train Masked Autoencoder feature encoders.
 
 ```bash
 # Latent space MAE
@@ -367,8 +367,4 @@ outputs/<run_name>/
 
 ---
 
-<div align="center">
-
-**Full command reference complete!** See [Getting Started](getting_started.md) for first steps.
-
-</div>
+See [Getting Started](getting_started.md) for initial setup.

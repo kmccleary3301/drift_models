@@ -1,4 +1,4 @@
-# 🌊 Drifting Models
+# Drifting Models
 
 [![CI](https://img.shields.io/github/actions/workflow/status/kmccleary3301/drift_models/ci.yml?branch=main&label=CI&logo=github&color=2088FF)](https://github.com/kmccleary3301/drift_models/actions/workflows/ci.yml)
 [![Nightly](https://img.shields.io/github/actions/workflow/status/kmccleary3301/drift_models/nightly.yml?label=Nightly&logo=github&color=6f42c1)](https://github.com/kmccleary3301/drift_models/actions/workflows/nightly.yml)
@@ -6,8 +6,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/drift-models?logo=python&color=3776AB)](https://pypi.org/project/drift-models/)
 [![License](https://img.shields.io/github/license/kmccleary3301/drift_models?color=2ea44f)](./LICENSE)
 
-> **Community PyTorch reproduction of** *[Generative Modeling via Drifting](https://arxiv.org/abs/2602.04770)*  
-> Generate images in **one forward pass** — no iterative denoising required.
+Community PyTorch reproduction of [Generative Modeling via Drifting](https://arxiv.org/abs/2602.04770) (Deng et al., 2026). This repository provides a concrete, installable implementation of the drifting objective for inspection and experimentation.
 
 ---
 
@@ -42,7 +41,7 @@ drift_models/
 
 ---
 
-## Quickstart (60 seconds)
+## Quickstart
 
 ### Option A: `uv` (recommended)
 
@@ -63,7 +62,7 @@ python scripts/runtime_preflight.py --device auto --strict
 python scripts/train_toy.py --config configs/toy/quick.yaml --output-dir outputs/toy_quick --device cpu
 ```
 
-### Option C: PyPI (just use it)
+### Option C: PyPI
 
 ```bash
 pip install drift-models
@@ -86,29 +85,29 @@ pip install drift-models
 
 ---
 
-## What Makes Drifting Different?
+## How Drifting Differs from Diffusion
 
-| Traditional Diffusion | Drifting Models |
-|--------------------------|--------------------|
-| 20-100 iterative steps | **Single forward pass** |
-| Each step runs full model | One evaluation, done |
-| Slow, memory-heavy | Fast, efficient |
-| ODE/SDE solvers at inference | Drift field during training |
+| Property | Traditional Diffusion | Drifting |
+|-----------|--------------------------|----------|
+| Inference steps | 20–100 iterative passes | Single forward pass |
+| Per-step cost | Full model evaluation each step | One evaluation total |
+| Inference mechanism | ODE/SDE solvers at generation time | Drift field absorbed during training |
 
-**The key insight:** Push distribution evolution into *training*, not inference.
+The core idea is to push distribution evolution into the training phase so that inference reduces to a single network evaluation.
 
 ---
 
-## Project Status & Claim Boundaries
+## Project Status
 
-| What We Are | What We Aren't |
-|----------------|-------------------|
-| Community reproduction | Official author code |
-| Mechanically faithful | Full metric parity (in progress) |
-| Latent pipeline (stable) | Pixel pipeline (experimental) |
-| PyPI installable | Production-ready model |
+| Scope | Status |
+|-----------|-----------|
+| Community reproduction of the drifting objective | Active |
+| Mechanical faithfulness to the paper | Implemented |
+| Latent pipeline | Stable; parity hardening in progress |
+| Pixel pipeline | Experimental |
+| Full metric parity with paper | Pending long-horizon runs |
 
-**Full transparency:** [Faithfulness Status](docs/faithfulness_status.md)
+This is not official author code. See [Faithfulness Status](docs/faithfulness_status.md) for the full claim-to-evidence mapping.
 
 ---
 
@@ -127,13 +126,13 @@ pip install drift-models
 ## Common Workflows
 
 ```bash
-# 2-minute sanity check (CPU)
+# Toy sanity check (CPU, ~2 min)
 uv run python scripts/train_toy.py --config configs/toy/quick.yaml --output-dir outputs/toy_quick --device cpu
 
-# Latent smoke test (GPU)
+# Latent pipeline smoke test (GPU)
 uv run python scripts/train_latent.py --config configs/latent/smoke.yaml --output-dir outputs/latent_smoke
 
-# Generate samples
+# Generate samples from a checkpoint
 uv run python scripts/sample.py --checkpoint outputs/latent_smoke/final_model.pt --output-dir samples/
 
 # Evaluate FID/IS
@@ -147,11 +146,10 @@ uv run python scripts/evaluate.py --checkpoint outputs/latent_smoke/final_model.
 | Check | Frequency | Output |
 |----------|-------------|-----------|
 | Preflight diagnostics | Every run | JSON capability report |
-| CI matrix | Push/PR | Linux/macOS/Windows |
+| CI matrix | Push/PR | Linux, macOS, Windows |
 | Nightly runs | Daily | Full integration tests |
 | Coverage | Weekly | Test coverage reports |
 
-**Preflight command:**
 ```bash
 python scripts/runtime_preflight.py --device auto --check-torchvision --strict
 ```
@@ -210,6 +208,6 @@ If you use this repository, please cite both the original paper and this impleme
 
 <div align="center">
 
-**One step. One forward pass. No compromises.**
+*Licensed under MIT. Contributions welcome.*
 
 </div>

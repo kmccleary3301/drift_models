@@ -1,6 +1,6 @@
 # Faithfulness Status
 
-> Claim boundaries and paper-faithfulness posture for this reproduction.
+Claim boundaries and paper-faithfulness posture for this reproduction.
 
 ---
 
@@ -67,18 +67,12 @@
 
 ---
 
-## Important Notes
+## Notes
 
-> This repository tracks **mechanical faithfulness** — we implement the same algorithms, but results may differ due to:
-> 
-> - Hardware differences (single GPU vs. paper's TPU pod)
-> - Training duration (shorter runs for validation)
-> - Hyperparameter adaptations
+This repository tracks **mechanical faithfulness** — it implements the same algorithms described in the paper, but results may differ due to:
 
----
+- Hardware differences (single GPU vs. paper's multi-device setup)
+- Training duration (shorter runs for validation)
+- Hyperparameter adaptations for feasibility
 
-<div align="center">
-
-**Transparency is our policy** — see [claim_to_evidence_matrix.md](claim_to_evidence_matrix.md) for detailed mapping.
-
-</div>
+See [claim_to_evidence_matrix.md](claim_to_evidence_matrix.md) for the detailed claim-to-evidence mapping.
