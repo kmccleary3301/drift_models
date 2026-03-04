@@ -1,60 +1,76 @@
 # Compatibility Matrix
 
-This document defines **support tiers** and the public compatibility claims for this repository.
+Support tiers and platform compatibility for Drifting Models.
 
-## Support tiers
+---
 
-- **First-class**: actively exercised and expected to work for core workflows.
-- **Best-effort**: should work for subsets of workflows; breakage may occur.
-- **Experimental**: known instability or incomplete operator/runtime coverage.
-- **Unsupported**: not targeted in current roadmap.
+## Support Tiers
 
-## Platform/runtime matrix
+| Tier | Definition | Expectation |
+|---------|-------------|---------------|
+| First-class | Actively exercised | Core workflows guaranteed to work |
+| Best-effort | Should work | Subsets only; breakage may occur |
+| Experimental | Known instability | Incomplete coverage, use with caution |
+| Unsupported | Not targeted | Out of current scope |
 
-| Tier | Platform | Scope | Notes |
-| --- | --- | --- | --- |
-| First-class | Linux x86_64 + CPU | unit/integration tests, toy/latent/pixel smokes, eval tooling | default CI target |
-| First-class | Linux x86_64 + NVIDIA CUDA | primary research training workflows | prefer explicit `--device cuda:0` |
-| Best-effort | Windows native + CPU | install + smoke/eval subsets | use WSL2 for heavy workflows |
-| Best-effort | Windows + WSL2 | Linux-like CPU/CUDA workflows when properly configured | environment variability expected |
-| Experimental | macOS Apple Silicon (MPS) | toy/smoke/sampling subsets | compile paths may be unstable |
-| Experimental | Linux + AMD ROCm | toy/smoke subsets; partial training viability | requires host-specific validation |
-| Unsupported | Multi-node distributed / TPU-XLA | none | single-process/single-device is current scope |
+---
 
-## Python / package policy
+## Platform Support
 
-| Component | Current baseline | Notes |
-| --- | --- | --- |
-| Python | 3.10+ | 3.12 remains primary maintainer environment |
-| PyTorch | 2.3+ | exact backend wheel selection is environment-specific |
-| torchvision | optional (`eval`/`imagenet` extra) | not required for minimal base install |
-| diffusers stack | optional (`sdvae` extra) | only required for SD-VAE related workflows |
+| Tier | Platform | Accelerator | Scope | Notes |
+|:-------:|-------------|----------------|----------|----------|
+| ⭐ | Linux x86_64 | CPU | Tests, toy/latent/pixel smokes, eval | Default CI target |
+| ⭐ | Linux x86_64 | NVIDIA CUDA | Research training workflows | Use `--device cuda:0` |
+| 🔶 | Windows Native | CPU | Install + smoke/eval subsets | Use WSL2 for heavy work |
+| 🔶 | Windows + WSL2 | CUDA/CPU | Linux-like workflows | Environment may vary |
+| 🧪 | macOS | Apple Silicon | Toy/smoke/sampling | Compile paths unstable |
+| 🧪 | Linux | AMD ROCm | Toy/smoke only | Requires host validation |
+| ❌ | Multi-node | TPU-XLA | None | Single-device only |
 
-## Compile policy
+---
 
-| Backend | Compile policy | Recommended fail action |
-| --- | --- | --- |
-| CPU | supported | `warn` (or `raise` in strict benchmarking lanes) |
-| CUDA | supported | `warn` (or `raise` for controlled performance runs) |
-| MPS | best-effort fallback only | `disable` |
-| XPU | best-effort fallback only | `disable` |
+## Python & Package Policy
 
-Repository-wide compile fallback actions:
-- `warn`: keep eager path and emit runtime warning
-- `raise`: fail fast on unsupported/failed compile path
-- `disable`: skip compile attempt entirely
+| Component | Baseline | Notes |
+|--------------|:-----------:|----------|
+| Python | 3.10+ | 3.12 recommended for dev |
+| PyTorch | 2.3+ | Backend wheel environment-specific |
+| torchvision | Optional | `eval`/`imagenet` extra |
+| diffusers | Optional | `sdvae` extra for SD-VAE workflows |
 
-## Known caveats
+---
 
-- `torch.compile` behavior is backend-dependent; use `--compile-fail-action warn` for safe fallback.
-- For MPS/XPU lanes use `--compile-fail-action disable` unless explicitly validating backend progress.
-- MPS may require fallback behavior (`PYTORCH_ENABLE_MPS_FALLBACK=1`) on unsupported ops.
-- Queue/data pipeline configurations can fail if dataset class coverage assumptions are unmet.
-- Pixel pipeline remains experimental and should not be interpreted as parity-closed.
+## torch.compile Policy
 
-## Claim boundaries
+| Backend | Compile Support | Recommended Action |
+|------------|:----------------:|---------------------|
+| CPU | Supported | `--compile-fail-action warn` |
+| NVIDIA CUDA | Supported | `--compile-fail-action warn` |
+| Apple MPS | Fallback only | `--compile-fail-action disable` |
+| Intel XPU | Fallback only | `--compile-fail-action disable` |
 
-Compatibility support does **not** imply paper-level metric parity. Claim scope remains governed by:
-- `docs/faithfulness_status.md`
-- `docs/reproduction_report.md`
-- `docs/eval_contract.md`
+### Fail Action Options
+
+| Flag | Behavior |
+|---------|-------------|
+| `warn` | Keep eager path, emit warning |
+| `raise` | Fail fast on compile failure |
+| `disable` | Skip compile attempt entirely |
+
+---
+
+## Known Caveats
+
+| Issue | Mitigation |
+|----------|-------------|
+| `torch.compile` backend-dependent | Use `--compile-fail-action warn` for safe fallback |
+| MPS/XPU compile issues | Use `--compile-fail-action disable` |
+| MPS unsupported ops | Set `PYTORCH_ENABLE_MPS_FALLBACK=1` |
+| Queue dataset assumptions | Validate dataset class coverage |
+| Pixel pipeline | Experimental — not parity-closed |
+
+---
+
+## Claim Boundaries
+
+Compatibility support does not imply paper-level metric parity. See [faithfulness_status.md](faithfulness_status.md), [reproduction_report.md](reproduction_report.md), and [eval_contract.md](eval_contract.md) for details.

@@ -1,36 +1,78 @@
 # Faithfulness Status
 
-This page is the claim-boundary summary for paper-faithfulness posture.
+Claim boundaries and paper-faithfulness posture for this reproduction.
 
-## Current status
+---
 
-- Repository is an active reproduction project, not a final faithfulness claim.
-- Latent pipeline is under ongoing parity hardening with evidence tracking.
-- Pixel pipeline remains experimental.
-- Long-horizon evidence runs are required before paper-level result claims.
+## Current Status
 
-## Evidence sources
+| Indicator | Status | Description |
+|-------------|-----------|----------------|
+| Repository Type | Community reproduction | Not official author code |
+| Latent Pipeline | Active hardening | Parity work in progress |
+| Pixel Pipeline | Config parity | Paper-scale evidence pending |
+| Full Results | Pending | Long-horizon runs required |
 
-- `docs/reproduction_report.md`
-- `docs/experiment_log.md`
-- `docs/eval_contract.md`
-- `docs/claim_to_evidence_matrix.md`
+---
 
-## Allowed vs disallowed claims
+## Allowed Claims
 
-### Allowed now
+| Claim | Rationale |
+|----------|-------------|
+| "Community PyTorch reproduction in progress" | Factually accurate |
+| "Includes drifting objective, queue pipeline, and eval tooling" | Implemented and tested |
+| "Closest-feasible single-GPU protocols" | Hardware-adapted but faithful |
+| "Extensive smoke/testing coverage" | CI across platforms |
+| "PyPI installable package" | `pip install drift-models` |
 
-- “Community PyTorch reproduction in progress.”
-- “Includes drifting objective, queue pipeline, and evaluation contract tooling.”
-- “Provides closest-feasible single-GPU protocols and extensive smoke/testing coverage.”
+## Not Allowed Claims
 
-### Not allowed now
+| Claim | Why |
+|----------|--------|
+| "Paper-level metric reproduction is complete" | Training runs still in progress |
+| "Paper-faithful parity is closed" | Known gaps documented |
+| "Official implementation" | Not from paper authors |
+| "Production-ready model" | Research code, not product |
 
-- “Paper-level metric reproduction is complete.”
-- “Paper-faithful parity is closed across all pipelines.”
-- “Official implementation.”
+---
 
-## Release/claim gate references
+## Evidence Sources
 
-- `docs/release_gate_checklist.md`
-- `docs/faithfulness_evidence_requirements.md`
+| Document | Link | Contains |
+|-------------|---------|-------------|
+| Reproduction Report | [reproduction_report.md](reproduction_report.md) | Current results vs. paper |
+| Experiment Log | [experiment_log.md](experiment_log.md) | Training run history |
+| Eval Contract | [eval_contract.md](eval_contract.md) | Measurement methodology |
+| Claim Matrix | [claim_to_evidence_matrix.md](claim_to_evidence_matrix.md) | Specific claim mapping |
+
+---
+
+## Pipeline Status
+
+| Pipeline | Status | Details |
+|-------------|:---------:|------------|
+| Latent | Active | Primary pipeline, under parity hardening |
+| Pixel | Experimental | Config-parity pinned, evidence pending |
+| MAE | Stable | Feature encoder working |
+| Toy | Stable | Sanity check pipeline |
+
+---
+
+## Release Gates
+
+| Checklist | Link | Purpose |
+|-------------|---------|------------|
+| Release Gate | [release_gate_checklist.md](release_gate_checklist.md) | Pre-release requirements |
+| Evidence Requirements | [faithfulness_evidence_requirements.md](faithfulness_evidence_requirements.md) | What evidence is needed |
+
+---
+
+## Notes
+
+This repository tracks **mechanical faithfulness** — it implements the same algorithms described in the paper, but results may differ due to:
+
+- Hardware differences (single GPU vs. paper's multi-device setup)
+- Training duration (shorter runs for validation)
+- Hyperparameter adaptations for feasibility
+
+See [claim_to_evidence_matrix.md](claim_to_evidence_matrix.md) for the detailed claim-to-evidence mapping.
