@@ -69,13 +69,18 @@ Success means a new engineer can answer these in under 10 minutes:
 - [x] Add deprecation matrix for legacy scripts/configs:
   - active, maintenance-only, deprecated.
 - [x] For deprecated entrypoints, print migration target on execution.
-- [ ] Remove dead paths after one tagged release cycle.
+- [ ] Remove dead paths after one tagged release cycle (release-gated; earliest target from matrix is `v0.3.0`).
 
 ## Validation gate
 
 A cleanup cycle is complete only if all pass:
 
-- [ ] Fresh clone newcomer test succeeds in < 10 minutes to first stable smoke run.
+- [x] Fresh clone newcomer test succeeds in < 10 minutes to first stable smoke run.
 - [x] Stable lane commands are copy/paste runnable from docs without edits.
 - [x] No public docs use deprecated scripts/configs.
 - [x] Scoreboard row for latest stable run is complete with artifact links.
+
+Latest fresh-clone evidence (2026-03-05):
+
+- Command: `uv sync --extra dev --extra eval && uv run python scripts/runtime_newcomer_smoke.py --device cpu --stable-steps 1 --timestamp 20260305_060606 --output-root outputs/onboarding/fresh_clone_smoke`
+- Wall time (`/usr/bin/time -p`): `real 31.11` seconds
