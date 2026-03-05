@@ -69,7 +69,7 @@ Success means a new engineer can answer these in under 10 minutes:
 - [x] Add deprecation matrix for legacy scripts/configs:
   - active, maintenance-only, deprecated.
 - [x] For deprecated entrypoints, print migration target on execution.
-- [ ] Remove dead paths after one tagged release cycle (release-gated; earliest target from matrix is `v0.3.0`).
+- [x] Remove dead paths after one tagged release cycle (completed on 2026-03-05; deprecated wrappers removed and canonical experimental paths retained).
 
 ## Validation gate
 

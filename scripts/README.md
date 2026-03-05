@@ -52,15 +52,11 @@ These scripts are useful for research but are not default public paths.
 Status policy is tracked in `docs/deprecation_matrix.md`.
 
 - `maintenance-only`: compatibility wrappers remain executable but should not be used for new automation.
-- `deprecated`: wrappers print migration targets at runtime and are scheduled for removal after at least one tagged release cycle.
+- `deprecated`: wrappers are scheduled for removal and should include explicit migration targets while active.
 - top-level experimental script names should use `exp_*` or `ablation_*` when new top-level experimental files are introduced.
 - all top-level script files must be registered in `scripts/script_surface_registry.json` and pass `scripts/check_script_surface_registry.py`.
 
-Current deprecated wrappers:
-
-- `check_feature_normalization_ab.py` -> `scripts/experimental/checks/feature_normalization_ab.py`
-- `check_feature_x2_toggle_effect.py` -> `scripts/experimental/checks/feature_x2_toggle_effect.py`
-- `run_pixel_mae_export_pipeline.py` -> `scripts/experimental/pipelines/pixel_mae_export.py`
+Current deprecated wrappers: none.
 
 ## Usage rule
 

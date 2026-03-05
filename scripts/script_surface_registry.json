@@ -44,11 +44,7 @@
     "run_queue_hotpath_benchmark.py",
     "summarize_recovery_matrix_2x2.py"
   ],
-  "deprecated_wrappers": [
-    "check_feature_normalization_ab.py",
-    "check_feature_x2_toggle_effect.py",
-    "run_pixel_mae_export_pipeline.py"
-  ],
+  "deprecated_wrappers": [],
   "legacy_misc": [
     "append_experiment_log.py",
     "audit_claim_eval_contract.py",
