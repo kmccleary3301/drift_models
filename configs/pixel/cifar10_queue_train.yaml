@@ -1,3 +1,4 @@
+tier: experimental
 # CIFAR-10 queue-backed pixel-space training scaffold (requires ImageFolder export)
 seed: 1337
 device: cuda

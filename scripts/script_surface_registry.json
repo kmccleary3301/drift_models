@@ -1,0 +1,81 @@
+{
+  "stable_entrypoints": [
+    "eval_fid_is.py",
+    "runtime_newcomer_smoke.py",
+    "runtime_preflight.py",
+    "runtime_stable_lane.py",
+    "sample_latent.py",
+    "train_latent.py",
+    "train_toy.py"
+  ],
+  "stable_support": [
+    "audit_run_bundle.py",
+    "cache_reference_stats.py",
+    "check_config_tiers.py",
+    "check_script_surface_registry.py",
+    "export_sd_vae_latents_tensor_file.py",
+    "make_run_root.py",
+    "prepare_imagenet1k_from_archives.py",
+    "summarize_runtime_preflight.py",
+    "validate_run_artifacts.py",
+    "verify_tensor_shards_manifest.py",
+    "wait_and_run_latent_claim_bundle.py",
+    "wait_and_verify_train_latents.py"
+  ],
+  "maintenance_wrappers": [
+    "check_feature_loss_reduction_scaling.py",
+    "check_latent_overfit.py",
+    "eval_alpha_sweep.py",
+    "eval_last_k_checkpoints.py",
+    "run_end_to_end_latent_eval.py",
+    "run_end_to_end_pixel_eval.py",
+    "run_feature_drift_kernel_compile_benchmark.py",
+    "run_feature_drift_temperature_reuse_benchmark.py",
+    "run_feature_drift_vectorization_benchmark.py",
+    "run_generator_arch_ablations.py",
+    "run_imagenet_latent_pipeline.py",
+    "run_latent_ablations.py",
+    "run_latent_table8_benchmark.py",
+    "run_mae_width_parity_exports.py",
+    "run_pixel_feature_encoder_ablations.py",
+    "run_pixel_paper_facing_package.py",
+    "run_pixel_proxy_ablation_package.py",
+    "run_pixel_queue_mae_export_compare.py",
+    "run_queue_hotpath_benchmark.py",
+    "summarize_recovery_matrix_2x2.py"
+  ],
+  "deprecated_wrappers": [
+    "check_feature_normalization_ab.py",
+    "check_feature_x2_toggle_effect.py",
+    "run_pixel_mae_export_pipeline.py"
+  ],
+  "legacy_misc": [
+    "append_experiment_log.py",
+    "audit_claim_eval_contract.py",
+    "audit_faithful_config_toggles.py",
+    "audit_nearest_neighbors.py",
+    "build_toy_trajectory_panels.py",
+    "capture_sdvae_provenance.py",
+    "check_queue_determinism.py",
+    "check_toy_determinism.py",
+    "check_toy_regression.py",
+    "disk_cleanup_checkpoints.py",
+    "export_cifar10_imagefolder.py",
+    "make_noisy_imagefolder.py",
+    "progress_bars.py",
+    "queue_report.py",
+    "render_queue_audit.py",
+    "report_ditlike_params.py",
+    "sample_fixed_seed_grids.py",
+    "sample_pixel.py",
+    "summarize_toy_ablation.py",
+    "train_mae.py",
+    "train_pixel.py",
+    "wait_and_queue_report.py"
+  ],
+  "experimental_top_level": [],
+  "internal": [
+    "__init__.py",
+    "_legacy_forward.py"
+  ]
+}

@@ -28,6 +28,12 @@ Complete reference for training, evaluation, and utility commands.
 
 ### Runtime Preflight
 ```bash
+# One-command onboarding smoke
+uv run python scripts/runtime_newcomer_smoke.py --device cpu
+
+# One-command stable lane wrapper
+uv run python scripts/runtime_stable_lane.py --device cpu
+
 # Basic preflight check
 uv run python scripts/runtime_preflight.py \
   --device auto \
@@ -60,7 +66,7 @@ Quick sanity checks — completes in ~2 minutes on CPU.
 | Config | Speed | Description |
 |-----------|---------|---------------|
 | `quick.yaml` | Fastest | 2D toy distribution, minimal compute |
-| `default.yaml` | Standard | Default toy settings |
+| `base.yaml` | Standard | Default toy settings |
 
 ```bash
 # Quick toy run (recommended for first test)

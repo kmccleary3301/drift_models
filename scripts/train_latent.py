@@ -42,6 +42,7 @@ from drifting_models.utils import (
     environment_fingerprint,
     environment_snapshot,
     file_sha256,
+    load_simple_kv_config as load_kv_config,
     load_training_checkpoint,
     maybe_compile_callable,
     payload_sha256,
@@ -92,6 +93,11 @@ def main() -> None:
         norm_type=args.norm_type,
         use_qk_norm=args.use_qk_norm,
         use_rope=args.use_rope,
+        alpha_embedding_type=args.alpha_embedding_type,
+        qk_norm_mode=args.qk_norm_mode,
+        rope_mode=args.rope_mode,
+        use_patch_positional_embedding=not args.disable_patch_positional_embedding,
+        rmsnorm_affine=not args.disable_rmsnorm_affine,
     )
     model = DiTLikeGenerator(model_config).to(device)
     optimizer = torch.optim.AdamW(
@@ -600,6 +606,7 @@ def main() -> None:
             "feature_encoder": args.feature_encoder,
             "mae_encoder_path": args.mae_encoder_path,
             "mae_encoder_arch": args.mae_encoder_arch,
+            "mae_input_patchify_size": int(args.mae_input_patchify_size),
             "use_queue": bool(args.use_queue),
             "queue_resumed_from_checkpoint": bool(queue_resumed_from_checkpoint),
             "latent_feature_decode_mode": args.latent_feature_decode_mode,
@@ -768,6 +775,7 @@ def _build_feature_extractor(*, args: argparse.Namespace, device: torch.device, 
             in_channels=in_channels,
             base_channels=args.feature_base_channels,
             stages=args.feature_stages,
+            input_patchify_size=args.mae_input_patchify_size,
             encoder_arch=args.mae_encoder_arch,
             mask_ratio=0.0,
         )
@@ -818,6 +826,7 @@ def _validate_mae_export_config(
         "in_channels": int(mae.config.in_channels),
         "base_channels": int(mae.config.base_channels),
         "stages": int(mae.config.stages),
+        "input_patchify_size": int(mae.config.input_patchify_size),
     }
     for key, expected_value in expected.items():
         if key not in export_config:
@@ -890,6 +899,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--norm-type", type=str, default="layernorm")
     parser.add_argument("--use-qk-norm", action="store_true")
     parser.add_argument("--use-rope", action="store_true")
+    parser.add_argument("--alpha-embedding-type", choices=("mlp", "fourier_mlp"), default="mlp")
+    parser.add_argument("--qk-norm-mode", choices=("auto", "none", "l2"), default="auto")
+    parser.add_argument("--rope-mode", choices=("auto", "none", "1d_flat", "2d_axial"), default="auto")
+    parser.add_argument("--disable-patch-positional-embedding", action="store_true")
+    parser.add_argument("--disable-rmsnorm-affine", action="store_true")
     parser.add_argument("--temperature", type=float, default=0.05)
     parser.add_argument("--drift-temperatures", nargs="*", type=float, default=[])
     parser.add_argument("--drift-temperature-reduction", choices=("mean", "sum"), default="sum")
@@ -911,6 +925,7 @@ def _parse_args() -> argparse.Namespace:
         choices=("resnet_unet", "legacy_conv", "paper_resnet34_unet"),
         default="resnet_unet",
     )
+    parser.add_argument("--mae-input-patchify-size", type=int, default=1)
     parser.add_argument("--feature-base-channels", type=int, default=16)
     parser.add_argument("--feature-stages", type=int, default=3)
     parser.add_argument("--latent-feature-decode-mode", choices=("none", "identity", "conv"), default="none")
@@ -1082,16 +1097,7 @@ def _apply_config_overrides(args: argparse.Namespace) -> argparse.Namespace:
 
 
 def _load_simple_kv_config(path: Path) -> dict[str, str]:
-    entries: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            raise ValueError(f"Invalid config line: {raw_line}")
-        key, value = line.split(":", 1)
-        entries[key.strip()] = value.strip()
-    return entries
+    return load_kv_config(path)
 
 
 def _coerce_like(raw_value: str, template: object) -> object:

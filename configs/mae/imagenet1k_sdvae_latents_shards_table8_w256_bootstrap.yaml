@@ -1,3 +1,4 @@
+tier: experimental
 # Width-parity MAE bootstrap config for Table-8 ablation-default latent template.
 # Purpose: produce a width-matched `w256` MAE export with full provenance on a
 # single-GPU host. This is not paper-scale MAE pretraining.

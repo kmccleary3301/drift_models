@@ -15,6 +15,16 @@ from typing import Any
 import torch
 
 
+def discover_repo_root(start: Path) -> Path:
+    current = start.resolve()
+    if current.is_file():
+        current = current.parent
+    for candidate in (current, *current.parents):
+        if (candidate / "pyproject.toml").exists():
+            return candidate
+    raise FileNotFoundError(f"Unable to locate repo root from {start}")
+
+
 def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:

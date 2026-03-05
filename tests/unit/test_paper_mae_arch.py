@@ -84,3 +84,48 @@ def test_mae_feature_maps_uses_paper_taps() -> None:
     maps = mae_feature_maps(model, images)
     assert len(maps) == 9
 
+
+def test_paper_pixel_mae_patchify_path_shapes() -> None:
+    model = LatentResNetMAE(
+        LatentResNetMAEConfig(
+            in_channels=3,
+            base_channels=8,
+            stages=4,
+            encoder_arch="paper_resnet34_unet",
+            input_patchify_size=8,
+            norm_groups=4,
+            mask_ratio=0.5,
+            mask_patch_size=2,
+        )
+    )
+    images = torch.randn(1, 3, 256, 256)
+    features = model.encode(images)
+    assert len(features) == 4
+    assert features[0].shape == (1, 8, 32, 32)
+    assert features[1].shape == (1, 16, 16, 16)
+    assert features[2].shape == (1, 32, 8, 8)
+    assert features[3].shape == (1, 64, 4, 4)
+
+    reconstruction, mask, _ = model(images)
+    assert reconstruction.shape == images.shape
+    assert mask.shape == (1, 1, 256, 256)
+
+
+def test_paper_pixel_mae_patchify_requires_divisible_resolution() -> None:
+    model = LatentResNetMAE(
+        LatentResNetMAEConfig(
+            in_channels=3,
+            base_channels=8,
+            stages=4,
+            encoder_arch="paper_resnet34_unet",
+            input_patchify_size=8,
+            norm_groups=4,
+            mask_ratio=0.0,
+        )
+    )
+    images = torch.randn(1, 3, 250, 256)
+    try:
+        _ = model.encode(images)
+        raise AssertionError("Expected ValueError for non-divisible input height")
+    except ValueError as exc:
+        assert "input spatial size must be divisible" in str(exc)

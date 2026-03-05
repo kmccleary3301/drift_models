@@ -40,6 +40,7 @@ from drifting_models.utils import (
     environment_fingerprint,
     environment_snapshot,
     file_sha256,
+    load_simple_kv_config as load_kv_config,
     load_training_checkpoint,
     maybe_compile_callable,
     resolve_device,
@@ -57,6 +58,18 @@ class MAEEncoderAdapter(nn.Module):
 
     def forward(self, images: torch.Tensor) -> list[torch.Tensor]:
         return self.mae.encode_feature_taps(images)
+
+
+class CombinedFeatureAdapter(nn.Module):
+    def __init__(self, modules: list[nn.Module]) -> None:
+        super().__init__()
+        self.modules_list = nn.ModuleList(modules)
+
+    def forward(self, images: torch.Tensor) -> list[torch.Tensor]:
+        maps: list[torch.Tensor] = []
+        for module in self.modules_list:
+            maps.extend(module(images))
+        return maps
 
 
 def main() -> None:
@@ -89,6 +102,11 @@ def main() -> None:
         norm_type=args.norm_type,
         use_qk_norm=args.use_qk_norm,
         use_rope=args.use_rope,
+        alpha_embedding_type=args.alpha_embedding_type,
+        qk_norm_mode=args.qk_norm_mode,
+        rope_mode=args.rope_mode,
+        use_patch_positional_embedding=not args.disable_patch_positional_embedding,
+        rmsnorm_affine=not args.disable_rmsnorm_affine,
     )
     model = DiTLikeGenerator(model_config).to(device)
     optimizer = torch.optim.AdamW(
@@ -441,8 +459,10 @@ def main() -> None:
             "warmup_steps": int(args.warmup_steps),
             "feature_encoder": args.feature_encoder,
             "convnext_weights": args.convnext_weights,
+            "convnextv2_weights": args.convnextv2_weights,
             "mae_encoder_path": args.mae_encoder_path,
             "mae_encoder_arch": args.mae_encoder_arch,
+            "mae_input_patchify_size": int(args.mae_input_patchify_size),
             "use_feature_loss": bool(args.use_feature_loss),
             "use_queue": bool(args.use_queue),
             "queue_resumed_from_checkpoint": bool(queue_resumed_from_checkpoint),
@@ -583,6 +603,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--norm-type", type=str, default="layernorm")
     parser.add_argument("--use-qk-norm", action="store_true")
     parser.add_argument("--use-rope", action="store_true")
+    parser.add_argument("--alpha-embedding-type", choices=("mlp", "fourier_mlp"), default="mlp")
+    parser.add_argument("--qk-norm-mode", choices=("auto", "none", "l2"), default="auto")
+    parser.add_argument("--rope-mode", choices=("auto", "none", "1d_flat", "2d_axial"), default="auto")
+    parser.add_argument("--disable-patch-positional-embedding", action="store_true")
+    parser.add_argument("--disable-rmsnorm-affine", action="store_true")
     parser.add_argument("--temperature", type=float, default=0.05)
     parser.add_argument("--drift-temperatures", nargs="*", type=float, default=[])
     parser.add_argument("--drift-temperature-reduction", choices=("mean", "sum"), default="sum")
@@ -593,8 +618,13 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--scheduler", choices=("none", "constant", "cosine", "warmup_cosine"), default="none")
     parser.add_argument("--warmup-steps", type=int, default=0)
     parser.add_argument("--use-feature-loss", action="store_true")
-    parser.add_argument("--feature-encoder", choices=("tiny", "mae", "convnext_tiny"), default="tiny")
+    parser.add_argument(
+        "--feature-encoder",
+        choices=("tiny", "mae", "convnext_tiny", "convnextv2_tiny", "mae_convnextv2"),
+        default="tiny",
+    )
     parser.add_argument("--convnext-weights", choices=("none", "imagenet1k_v1"), default="none")
+    parser.add_argument("--convnextv2-weights", choices=("none", "imagenet1k_v1"), default="none")
     parser.add_argument(
         "--mae-encoder-path",
         type=str,
@@ -606,6 +636,7 @@ def _parse_args() -> argparse.Namespace:
         choices=("resnet_unet", "legacy_conv", "paper_resnet34_unet"),
         default="resnet_unet",
     )
+    parser.add_argument("--mae-input-patchify-size", type=int, default=1)
     parser.add_argument("--feature-base-channels", type=int, default=16)
     parser.add_argument("--feature-stages", type=int, default=3)
     parser.add_argument("--feature-temperatures", nargs="+", type=float, default=[0.02, 0.05, 0.2])
@@ -745,13 +776,26 @@ def _build_feature_extractor(*, args: argparse.Namespace, device: torch.device) 
                 stages=args.feature_stages,
             )
         ).to(device)
+    if args.feature_encoder == "mae":
+        return _build_mae_feature_extractor(args=args, device=device)
     if args.feature_encoder == "convnext_tiny":
         return _build_convnext_feature_extractor(args=args, device=device)
+    if args.feature_encoder == "convnextv2_tiny":
+        return _build_convnextv2_feature_extractor(args=args, device=device)
+    if args.feature_encoder == "mae_convnextv2":
+        mae_adapter = _build_mae_feature_extractor(args=args, device=device)
+        convnextv2_adapter = _build_convnextv2_feature_extractor(args=args, device=device)
+        return CombinedFeatureAdapter([mae_adapter, convnextv2_adapter]).to(device)
+    raise ValueError(f"Unsupported feature_encoder: {args.feature_encoder}")
+
+
+def _build_mae_feature_extractor(*, args: argparse.Namespace, device: torch.device) -> nn.Module:
     mae = LatentResNetMAE(
         LatentResNetMAEConfig(
             in_channels=args.channels,
             base_channels=args.feature_base_channels,
             stages=args.feature_stages,
+            input_patchify_size=args.mae_input_patchify_size,
             encoder_arch=args.mae_encoder_arch,
             mask_ratio=0.0,
         )
@@ -770,6 +814,33 @@ def _build_convnext_feature_extractor(*, args: argparse.Namespace, device: torch
     if args.convnext_weights == "imagenet1k_v1":
         weights = ConvNeXt_Tiny_Weights.IMAGENET1K_V1
     backbone = convnext_tiny(weights=weights).to(device)
+    return HookedFeatureAdapter(
+        backbone=backbone,
+        config=HookedFeatureAdapterConfig(
+            return_nodes=("features.1", "features.3", "features.5", "features.7"),
+        ),
+    ).to(device)
+
+
+def _build_convnextv2_feature_extractor(*, args: argparse.Namespace, device: torch.device) -> nn.Module:
+    from torchvision import models as tv_models
+
+    if int(args.channels) != 3:
+        raise ValueError("convnextv2_tiny feature encoder requires --channels 3")
+    if not hasattr(tv_models, "convnext_v2_tiny"):
+        raise ValueError(
+            "convnextv2_tiny requires torchvision with convnext_v2_tiny support. "
+            "Upgrade torchvision or use --feature-encoder convnext_tiny."
+        )
+    weights = None
+    if args.convnextv2_weights == "imagenet1k_v1":
+        weights_enum = getattr(tv_models, "ConvNeXt_V2_Tiny_Weights", None)
+        if weights_enum is None:
+            raise ValueError(
+                "convnextv2_tiny pretrained weights require ConvNeXt_V2_Tiny_Weights in torchvision."
+            )
+        weights = weights_enum.IMAGENET1K_V1
+    backbone = tv_models.convnext_v2_tiny(weights=weights).to(device)
     return HookedFeatureAdapter(
         backbone=backbone,
         config=HookedFeatureAdapterConfig(
@@ -819,6 +890,7 @@ def _validate_mae_export_config(
         "in_channels": int(mae.config.in_channels),
         "base_channels": int(mae.config.base_channels),
         "stages": int(mae.config.stages),
+        "input_patchify_size": int(mae.config.input_patchify_size),
     }
     for key, expected_value in expected.items():
         if key not in export_config:
@@ -865,16 +937,7 @@ def _apply_config_overrides(args: argparse.Namespace) -> argparse.Namespace:
 
 
 def _load_simple_kv_config(path: Path) -> dict[str, str]:
-    entries: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            raise ValueError(f"Invalid config line: {raw_line}")
-        key, value = line.split(":", 1)
-        entries[key.strip()] = value.strip()
-    return entries
+    return load_kv_config(path)
 
 
 def _coerce_like(raw_value: str, template: object) -> object:

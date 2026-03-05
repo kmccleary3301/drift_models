@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from drifting_models.utils.simple_kv import load_simple_kv_config
+
 
 _FAITHFUL_TABLE8_CONFIGS: dict[str, Path] = {
     "ablation_default": Path("configs/latent/imagenet1k_sdvae_latents_table8_ablation_default_template.yaml"),
@@ -21,18 +23,19 @@ _EXPECTED_MAE_PATH_TOKEN: dict[str, str] = {
     "l2": "w640",
 }
 
+_CLOSEST_FEASIBLE_B2_CONFIG = Path("configs/latent/imagenet1k_sdvae_latents_table8_b2_closest_feasible_single_gpu.yaml")
+
+_EXPECTED_MICROVARIANT_TUPLE: dict[str, str] = {
+    "alpha-embedding-type": "mlp",
+    "qk-norm-mode": "l2",
+    "rope-mode": "2d_axial",
+    "disable-patch-positional-embedding": "true",
+    "disable-rmsnorm-affine": "true",
+}
+
 
 def _parse_simple_kv(path: Path) -> dict[str, str]:
-    parsed: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        parsed[key.strip()] = value.strip()
-    return parsed
+    return load_simple_kv_config(path)
 
 
 def test_table8_faithful_configs_enforce_feature_vector_contract() -> None:
@@ -60,6 +63,13 @@ def test_table8_faithful_configs_enforce_feature_vector_contract() -> None:
             config.get("feature-temperature-aggregation") == "sum_drifts_then_mse"
         ), f"{path} must set feature-temperature-aggregation=sum_drifts_then_mse"
         assert config.get("feature-loss-term-reduction") == "sum", f"{path} must set feature-loss-term-reduction=sum"
+        assert config.get("alpha-embedding-type") == "mlp", f"{path} must set alpha-embedding-type=mlp"
+        assert config.get("qk-norm-mode") == "l2", f"{path} must set qk-norm-mode=l2"
+        assert config.get("rope-mode") == "2d_axial", f"{path} must set rope-mode=2d_axial"
+        assert (
+            config.get("disable-patch-positional-embedding") == "true"
+        ), f"{path} must set disable-patch-positional-embedding=true"
+        assert config.get("disable-rmsnorm-affine") == "true", f"{path} must set disable-rmsnorm-affine=true"
 
 
 def test_table8_faithful_configs_enforce_queue_contract() -> None:
@@ -71,3 +81,9 @@ def test_table8_faithful_configs_enforce_queue_contract() -> None:
         assert (
             config.get("queue-strict-without-replacement") == "true"
         ), f"{path} must set queue-strict-without-replacement=true"
+
+
+def test_closest_feasible_b2_pins_generator_microvariant_tuple() -> None:
+    config = _parse_simple_kv(_CLOSEST_FEASIBLE_B2_CONFIG)
+    for key, expected in _EXPECTED_MICROVARIANT_TUPLE.items():
+        assert config.get(key) == expected, f"{_CLOSEST_FEASIBLE_B2_CONFIG} must set {key}={expected}"

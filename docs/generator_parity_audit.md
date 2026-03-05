@@ -37,7 +37,7 @@ Implementation: `drifting_models/models/dit_like.py`.
   - `patch_embed: Conv2d(kernel=stride=patch_size)`, flattened into tokens.
   - `output_projection -> _unpatchify` back to `[B, C, H, W]`.
 - Conditioning vector:
-  - Class embedding + alpha MLP embedding + (optional) style embedding sum.
+  - Class embedding + configurable alpha embedding (`mlp` or `fourier_mlp`) + (optional) style embedding sum.
 - In-context conditioning tokens:
   - Implemented as `register_tokens` (default `16` in Table 8 configs).
   - `register_base + register_positional_embedding + condition_to_register(condition)`.
@@ -47,9 +47,10 @@ Implementation: `drifting_models/models/dit_like.py`.
   - Modulation final layer is zero-initialized.
 - Transformer components:
   - SwiGLU feed-forward (`SwiGLUFeedForward`).
-  - RoPE (`apply_rope`) optional via `use_rope`.
-  - QK-Norm optional via `use_qk_norm` (L2-normalize q/k).
-  - RMSNorm available via `norm_type=rmsnorm`.
+  - RoPE configurable via `rope_mode` (`none`, `1d_flat`, `2d_axial`; `auto` keeps legacy `use_rope` behavior).
+  - QK-Norm configurable via `qk_norm_mode` (`none`, `l2`; `auto` keeps legacy `use_qk_norm` behavior).
+  - RMSNorm available via `norm_type=rmsnorm` with optional affine gain toggle (`rmsnorm_affine`).
+  - Patch absolute positional embeddings can be toggled on/off (`use_patch_positional_embedding`).
 
 Config parity for paper Table 8 is represented in configs like:
 - `configs/latent/imagenet1k_sdvae_latents_table8_l2_template.yaml`
@@ -63,18 +64,17 @@ Config parity for paper Table 8 is represented in configs like:
 
 These are places the paper scan does not fully specify details, so we may not be identical to the authors’ code:
 
-1. Patch positional embeddings:
-   - We add a learnable `patch_positional_embedding` to patch tokens.
-   - Paper explicitly mentions positional embeddings for in-context tokens; it does not clearly state whether patch tokens also have absolute positional embeddings when RoPE is used.
+1. Alpha embedding micro-variant:
+   - Paper does not fully pin the exact conditioning parameterization details.
+   - Repo now provides explicit selectable variants (`mlp`, `fourier_mlp`) so runs can match a chosen interpretation and record it.
 
-2. RMSNorm “affine” behavior under adaLN:
-   - Our `RMSNorm` includes a learnable per-dim `weight`.
-   - For `LayerNorm`, we use `elementwise_affine=False` (consistent with DiT-style modulation).
-   - Paper cites RMSNorm but does not specify whether its gain is present/absent/frozen under adaLN.
+2. Positional/RoPE micro-variant:
+   - Paper does not clearly specify absolute patch pos-emb presence with RoPE or 1D vs 2D RoPE layout.
+   - Repo now exposes `use_patch_positional_embedding` and `rope_mode` (`1d_flat`/`2d_axial`) so both plausible interpretations are testable.
 
-3. RoPE layout:
-   - Our RoPE is 1D over the flattened token index.
-   - Paper does not specify 1D vs 2D RoPE for the 2D patch grid.
+3. QK/RMSNorm micro-variant:
+   - Paper cites QK-Norm + RMSNorm but not all implementation details.
+   - Repo now exposes `qk_norm_mode` and `rmsnorm_affine` to cover the main plausible variants.
 
 ## Verdict
 
@@ -88,15 +88,14 @@ These are places the paper scan does not fully specify details, so we may not be
 - In-context/register tokens (16): yes
 - Style embeddings (32 tokens, vocab 64): yes
 
-The remaining gaps are mostly *spec ambiguities* (pos-emb and norm details), not missing modules.
+The remaining uncertainty is primarily at the **evidence-selection** level (which variant best matches the authors), not at missing implementation capability.
 
 ## Recommended Next Actions (If We Want Closer Parity)
 
-1. Make patch positional embedding optional (e.g., `use_abs_pos_emb: bool`) and test with RoPE-only.
-2. Add an RMSNorm “no-affine” option (or freeze gain) to mirror LayerNorm’s `elementwise_affine=False` behavior.
-3. Add a 2D RoPE option for the patch grid (latent and pixel variants).
-4. Add a small “generator parity unit test” to assert:
-   - token counts match expected `(register_tokens + num_patches)`
-   - style embedding path produces deterministic shapes
-   - RoPE requires even head_dim
+1. For each claim-facing run, explicitly pin and log:
+   - `alpha_embedding_type`, `rope_mode`, `qk_norm_mode`, `use_patch_positional_embedding`, `rmsnorm_affine`.
+2. Add a small sweep over these variants on short runs and compare with nearest-neighbor / proxy metrics to choose default claim-facing micro-variant.
+3. Keep `tests/unit/test_dit_like.py` parity checks as required CI coverage for new generator options.
 
+Latest short-run micro-variant selection artifact:
+- `docs/generator_microvariant_selection_20260303.md`

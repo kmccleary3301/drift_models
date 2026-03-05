@@ -1,0 +1,3 @@
+include: ../experimental/pixel/imagenet256_table8_l16_template.yaml
+tier: experimental
+canonical-config: configs/experimental/pixel/imagenet256_table8_l16_template.yaml

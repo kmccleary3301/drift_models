@@ -1,3 +1,4 @@
+tier: experimental
 # Stage-7 pixel-space feature+queue smoke config with MAE encoder export loaded
 seed: 1337
 device: cpu

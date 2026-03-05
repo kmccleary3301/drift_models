@@ -28,7 +28,8 @@ def test_pixel_mae_export_pipeline_smoke(tmp_path: Path) -> None:
         text=True,
     )
     payload = json.loads(result.stdout)
+    assert "scripts/run_pixel_mae_export_pipeline.py" in result.stderr
+    assert "scripts/experimental/pipelines/pixel_mae_export.py" in result.stderr
     assert (out_root / "pipeline_summary.json").exists()
     assert Path(payload["paths"]["export_path"]).exists()
     assert Path(payload["paths"]["pixel_summary_path"]).exists()
-

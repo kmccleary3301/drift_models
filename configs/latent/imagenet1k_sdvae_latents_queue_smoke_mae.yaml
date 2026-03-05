@@ -1,3 +1,4 @@
+tier: stable
 # Smoke-level ImageNet-1k latent run (SD-VAE 32x32x4 latents) with MAE feature loss.
 # This is not paper-scale; it is meant to validate end-to-end wiring on real ImageNet latents.
 

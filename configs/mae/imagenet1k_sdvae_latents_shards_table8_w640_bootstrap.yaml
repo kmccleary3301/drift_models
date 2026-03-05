@@ -1,3 +1,4 @@
+tier: experimental
 # Width-parity MAE bootstrap config for Table-8 B/2 and L/2 latent templates.
 # Purpose: produce a width-matched `w640` MAE export with full provenance on a
 # single-GPU host. This is not paper-scale MAE pretraining.

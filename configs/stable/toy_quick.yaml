@@ -1,0 +1,3 @@
+include: ../toy/quick.yaml
+tier: stable
+canonical-config: configs/toy/quick.yaml

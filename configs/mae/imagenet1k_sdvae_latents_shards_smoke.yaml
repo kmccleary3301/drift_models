@@ -1,3 +1,4 @@
+tier: stable
 # Latent-MAE smoke config targeting sharded ImageNet-1k SD-VAE latents.
 # Fill in `real-tensor-shards-manifest-path` once the latent export exists.
 

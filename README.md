@@ -72,6 +72,12 @@ pip install drift-models
 
 ## Documentation Navigator
 
+### If You Only Read 3 Docs
+
+1. [Minimal Repro Lane](docs/minimal_repro_imagenet256.md)
+2. [Stable vs Experimental](docs/stable_vs_experimental.md)
+3. [Reproducibility Scoreboard](docs/reproducibility_scoreboard.md)
+
 | Topic | Link | Description |
 |----------|---------|----------------|
 | Getting Started | [Getting Started](docs/getting_started.md) | Toy runs, smoke tests, first training |
@@ -81,6 +87,7 @@ pip install drift-models
 | Evaluation | [Eval Contract](docs/eval_contract.md) | How we measure quality |
 | Compatibility | [Compatibility](docs/compatibility_matrix.md) | Supported platforms & backends |
 | Runtime Health | [Runtime Health](docs/runtime_health.md) | Preflight diagnostics |
+| Lifecycle Status | [Deprecation Matrix](docs/deprecation_matrix.md) | Active vs maintenance vs deprecated paths |
 | Reproduction | [Reproduction Report](docs/reproduction_report.md) | Current results vs. paper |
 
 ---
@@ -126,18 +133,39 @@ This is not official author code. See [Faithfulness Status](docs/faithfulness_st
 ## Common Workflows
 
 ```bash
-# Toy sanity check (CPU, ~2 min)
+# Newcomer end-to-end smoke (preflight + toy + stable latent smoke)
+uv run python scripts/runtime_newcomer_smoke.py --device cpu
+
+# One-command stable lane (preflight + train + artifact validation)
+uv run python scripts/runtime_stable_lane.py --device cpu
+
+# Runtime preflight
+uv run python scripts/runtime_preflight.py --device auto --check-torchvision --strict
+
+# Toy sanity check (CPU)
 uv run python scripts/train_toy.py --config configs/toy/quick.yaml --output-dir outputs/toy_quick --device cpu
 
-# Latent pipeline smoke test (GPU)
-uv run python scripts/train_latent.py --config configs/latent/smoke.yaml --output-dir outputs/latent_smoke
+# Stable-lane latent run root
+OUT=$(uv run python scripts/make_run_root.py --lane stable --base-dir outputs/imagenet | python -c "import json,sys; print(json.load(sys.stdin)['run_root'])")
+mkdir -p "${OUT}"
 
-# Generate samples from a checkpoint
-uv run python scripts/sample.py --checkpoint outputs/latent_smoke/final_model.pt --output-dir samples/
+# Stable-lane latent train
+uv run python scripts/train_latent.py \
+  --config configs/stable/latent_smoke_feature_queue.yaml \
+  --device cuda:0 \
+  --output-dir "${OUT}" \
+  --checkpoint-dir "${OUT}/checkpoints" \
+  --checkpoint-path "${OUT}/checkpoint.pt"
 
-# Evaluate FID/IS
-uv run python scripts/evaluate.py --checkpoint outputs/latent_smoke/final_model.pt --imagenet-val data/imagenet/val
+# Validate artifact bundle
+uv run python scripts/validate_run_artifacts.py --run-root "${OUT}" --lane stable --allow-missing-eval-summaries
 ```
+
+Use deep docs for dense catalogs and legacy/experimental flows:
+
+- [Commands](docs/commands.md)
+- [ImageNet Runbook](docs/imagenet_runbook.md)
+- [Experiment Log](docs/experiment_log.md)
 
 ---
 

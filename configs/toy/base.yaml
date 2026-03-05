@@ -1,3 +1,4 @@
+tier: stable
 seed: 1337
 latent_dim: 2
 data_dim: 2

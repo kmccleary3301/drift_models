@@ -15,6 +15,7 @@ class LatentResNetMAEConfig:
     stages: int = 3
     mask_ratio: float = 0.6
     mask_patch_size: int = 2
+    input_patchify_size: int = 1
     encoder_arch: str = "resnet_unet"  # {"resnet_unet", "legacy_conv", "paper_resnet34_unet"}
     blocks_per_stage: int = 2
     norm_groups: int = 8
@@ -266,9 +267,13 @@ class LatentResNetMAE(nn.Module):
             raise ValueError("stages must be >= 1")
         if config.blocks_per_stage < 1:
             raise ValueError("blocks_per_stage must be >= 1")
+        if int(config.input_patchify_size) < 1:
+            raise ValueError("input_patchify_size must be >= 1")
         if config.encoder_arch not in {"resnet_unet", "legacy_conv", "paper_resnet34_unet"}:
             raise ValueError("encoder_arch must be one of {'resnet_unet', 'legacy_conv', 'paper_resnet34_unet'}")
         self.config = config
+        self._input_patchify_size = int(config.input_patchify_size)
+        self._model_in_channels = int(config.in_channels) * self._input_patchify_size * self._input_patchify_size
         self._uses_skip_connections = False
         self._uses_paper_arch = False
 
@@ -282,7 +287,7 @@ class LatentResNetMAE(nn.Module):
     def _build_legacy_conv(self) -> None:
         encoder_blocks: list[nn.Module] = []
         stage_channels: list[int] = []
-        in_channels = self.config.in_channels
+        in_channels = self._model_in_channels
         for stage in range(self.config.stages):
             out_channels = self.config.base_channels * (2**stage)
             encoder_blocks.append(
@@ -308,7 +313,7 @@ class LatentResNetMAE(nn.Module):
         decoder_blocks: list[nn.Module] = []
         hidden_channels = stage_channels[-1]
         for stage in reversed(range(self.config.stages)):
-            out_channels = self.config.in_channels if stage == 0 else stage_channels[stage - 1]
+            out_channels = self._model_in_channels if stage == 0 else stage_channels[stage - 1]
             block_layers: list[nn.Module] = [
                 nn.ConvTranspose2d(hidden_channels, out_channels, kernel_size=4, stride=2, padding=1)
             ]
@@ -330,7 +335,7 @@ class LatentResNetMAE(nn.Module):
     def _build_resnet_unet(self) -> None:
         encoder_blocks: list[nn.Module] = []
         stage_channels: list[int] = []
-        in_channels = self.config.in_channels
+        in_channels = self._model_in_channels
         for stage in range(self.config.stages):
             out_channels = self.config.base_channels * (2**stage)
             stage_layers: list[nn.Module] = [
@@ -359,7 +364,7 @@ class LatentResNetMAE(nn.Module):
         hidden_channels = stage_channels[-1]
         for stage in reversed(range(self.config.stages)):
             final_stage = stage == 0
-            out_channels = self.config.in_channels if final_stage else stage_channels[stage - 1]
+            out_channels = self._model_in_channels if final_stage else stage_channels[stage - 1]
             skip_channels = None if final_stage else stage_channels[stage - 1]
             decoder_blocks.append(
                 _DecoderStage(
@@ -380,7 +385,7 @@ class LatentResNetMAE(nn.Module):
             raise ValueError("paper_resnet34_unet requires stages=4")
         channels = int(self.config.base_channels)
         self.paper_stem = nn.Sequential(
-            nn.Conv2d(self.config.in_channels, channels, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Conv2d(self._model_in_channels, channels, kernel_size=3, stride=1, padding=1, bias=False),
             nn.GroupNorm(num_groups=_group_count(channels, self.config.norm_groups), num_channels=channels),
             nn.ReLU(inplace=True),
         )
@@ -432,15 +437,19 @@ class LatentResNetMAE(nn.Module):
                 ),
             ]
         )
-        self.paper_decoder_output = nn.Conv2d(channels, self.config.in_channels, kernel_size=3, stride=1, padding=1)
+        self.paper_decoder_output = nn.Conv2d(channels, self._model_in_channels, kernel_size=3, stride=1, padding=1)
         self._uses_skip_connections = True
         self._uses_paper_arch = True
 
     def encode(self, images: torch.Tensor) -> list[torch.Tensor]:
         if images.ndim != 4:
             raise ValueError(f"images must be [B, C, H, W], got {tuple(images.shape)}")
+        processed = self._patchify_input(images)
+        return self._encode_processed(processed)
+
+    def _encode_processed(self, processed_images: torch.Tensor) -> list[torch.Tensor]:
         if self._uses_paper_arch:
-            hidden = self.paper_stem(images)
+            hidden = self.paper_stem(processed_images)
             stage_outputs: list[torch.Tensor] = []
             for blocks in self.paper_encoder_stages:
                 for block in blocks:
@@ -448,7 +457,7 @@ class LatentResNetMAE(nn.Module):
                 stage_outputs.append(hidden)
             return stage_outputs
         features: list[torch.Tensor] = []
-        hidden = images
+        hidden = processed_images
         for block in self.encoder:
             hidden = block(hidden)
             features.append(hidden)
@@ -457,9 +466,10 @@ class LatentResNetMAE(nn.Module):
     def encode_feature_taps(self, images: torch.Tensor) -> list[torch.Tensor]:
         if images.ndim != 4:
             raise ValueError(f"images must be [B, C, H, W], got {tuple(images.shape)}")
+        processed = self._patchify_input(images)
         if not self._uses_paper_arch:
-            return self.encode(images)
-        hidden = self.paper_stem(images)
+            return self._encode_processed(processed)
+        hidden = self.paper_stem(processed)
         taps: list[torch.Tensor] = []
         for blocks in self.paper_encoder_stages:
             block_count = len(blocks)
@@ -484,7 +494,8 @@ class LatentResNetMAE(nn.Module):
             hidden = self.paper_decoder_stages[0](hidden, skip=encoder_features[2])
             hidden = self.paper_decoder_stages[1](hidden, skip=encoder_features[1])
             hidden = self.paper_decoder_stages[2](hidden, skip=encoder_features[0])
-            return self.paper_decoder_output(hidden)
+            decoded = self.paper_decoder_output(hidden)
+            return self._unpatchify_output(decoded)
         hidden = bottleneck
         for decode_index, block in enumerate(self.decoder):
             if isinstance(block, _DecoderStage):
@@ -496,7 +507,7 @@ class LatentResNetMAE(nn.Module):
                 hidden = block(hidden, skip=skip)
             else:
                 hidden = block(hidden)
-        return hidden
+        return self._unpatchify_output(hidden)
 
     def forward(
         self,
@@ -505,11 +516,43 @@ class LatentResNetMAE(nn.Module):
         mask_ratio: float | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, list[torch.Tensor]]:
         ratio = self.config.mask_ratio if mask_ratio is None else mask_ratio
-        mask = sample_random_mask(images, mask_ratio=ratio, patch_size=self.config.mask_patch_size)
-        masked_inputs = images * (1.0 - mask)
-        features = self.encode(masked_inputs)
+        processed_inputs = self._patchify_input(images)
+        mask_processed = sample_random_mask(
+            processed_inputs,
+            mask_ratio=ratio,
+            patch_size=self.config.mask_patch_size,
+        )
+        masked_inputs = processed_inputs * (1.0 - mask_processed)
+        features = self._encode_processed(masked_inputs)
         reconstruction = self.decode(features[-1], encoder_features=features)
+        mask = self._expand_mask_to_input(mask_processed, target_hw=images.shape[-2:])
         return reconstruction, mask, features
+
+    def _patchify_input(self, images: torch.Tensor) -> torch.Tensor:
+        if images.shape[1] != int(self.config.in_channels):
+            raise ValueError(
+                f"Expected input channels={self.config.in_channels}, got {images.shape[1]}"
+            )
+        if self._input_patchify_size == 1:
+            return images
+        patch = self._input_patchify_size
+        if images.shape[-2] % patch != 0 or images.shape[-1] % patch != 0:
+            raise ValueError(
+                f"input spatial size must be divisible by input_patchify_size={patch}, got {tuple(images.shape[-2:])}"
+            )
+        return F.pixel_unshuffle(images, downscale_factor=patch)
+
+    def _unpatchify_output(self, decoded: torch.Tensor) -> torch.Tensor:
+        if self._input_patchify_size == 1:
+            return decoded
+        return F.pixel_shuffle(decoded, upscale_factor=self._input_patchify_size)
+
+    def _expand_mask_to_input(self, mask_processed: torch.Tensor, *, target_hw: tuple[int, int]) -> torch.Tensor:
+        if self._input_patchify_size == 1:
+            return mask_processed
+        patch = self._input_patchify_size
+        mask = mask_processed.repeat_interleave(patch, dim=2).repeat_interleave(patch, dim=3)
+        return mask[:, :, : target_hw[0], : target_hw[1]]
 
 
 def sample_random_mask(images: torch.Tensor, *, mask_ratio: float, patch_size: int = 1) -> torch.Tensor:

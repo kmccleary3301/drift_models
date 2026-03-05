@@ -19,19 +19,40 @@ from drifting_models.utils.device import (
 )
 from drifting_models.utils.repro import (
     codebase_fingerprint,
+    discover_repo_root,
     environment_fingerprint,
     environment_snapshot,
     file_sha256,
     payload_sha256,
     write_json,
 )
+from drifting_models.utils.output_paths import (
+    build_experimental_run_root,
+    build_stable_run_root,
+    is_experimental_run_name,
+    is_stable_run_name,
+    make_experimental_run_name,
+    make_run_timestamp,
+    make_stable_run_name,
+    slugify_experiment_name,
+)
+from drifting_models.utils.simple_kv import load_simple_kv_config
 
 __all__ = [
     "codebase_fingerprint",
     "detect_runtime_capabilities",
+    "discover_repo_root",
     "environment_fingerprint",
     "environment_snapshot",
     "file_sha256",
+    "is_experimental_run_name",
+    "is_stable_run_name",
+    "load_simple_kv_config",
+    "make_experimental_run_name",
+    "make_run_timestamp",
+    "make_stable_run_name",
+    "build_stable_run_root",
+    "build_experimental_run_root",
     "available_device_strings",
     "add_device_argument",
     "device_argument_help",
@@ -47,5 +68,6 @@ __all__ = [
     "RuntimeCapabilities",
     "save_training_checkpoint",
     "seed_everything",
+    "slugify_experiment_name",
     "write_json",
 ]

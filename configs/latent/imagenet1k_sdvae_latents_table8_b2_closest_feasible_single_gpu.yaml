@@ -1,3 +1,4 @@
+tier: stable
 # Closest-feasible single-GPU approximation of Table 8 (B/2 latent).
 #
 # Rationale:
@@ -30,6 +31,11 @@ register-tokens: 16
 norm-type: rmsnorm
 use-qk-norm: true
 use-rope: true
+alpha-embedding-type: mlp
+qk-norm-mode: l2
+rope-mode: 2d_axial
+disable-patch-positional-embedding: true
+disable-rmsnorm-affine: true
 
 # Drifting loss
 temperature: 0.05

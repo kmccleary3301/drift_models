@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from drifting_models.utils.simple_kv import load_simple_kv_config
+
 
 _STRICT_LONGRUN_CONFIGS = (
     Path("configs/latent/imagenet1k_sdvae_latents_ablation_horizon_b2.yaml"),
@@ -16,16 +18,7 @@ _STRICT_LONGRUN_CONFIGS = (
 
 
 def _parse_simple_kv(path: Path) -> dict[str, str]:
-    parsed: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        parsed[key.strip()] = value.strip()
-    return parsed
+    return load_simple_kv_config(path)
 
 
 def test_longrun_queue_configs_pin_strict_no_replacement() -> None:

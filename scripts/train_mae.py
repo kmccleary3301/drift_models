@@ -19,6 +19,7 @@ from drifting_models.utils import (
     environment_fingerprint,
     environment_snapshot,
     file_sha256,
+    load_simple_kv_config as load_kv_config,
     load_training_checkpoint,
     resolve_device,
     save_training_checkpoint,
@@ -79,6 +80,7 @@ def main() -> None:
             in_channels=config.in_channels,
             base_channels=config.base_channels,
             stages=config.stages,
+            input_patchify_size=args.input_patchify_size,
             encoder_arch=config.encoder_arch,
             blocks_per_stage=config.blocks_per_stage,
             norm_groups=config.norm_groups,
@@ -261,6 +263,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--num-classes", type=int, default=1000)
     parser.add_argument("--base-channels", type=int, default=16)
     parser.add_argument("--stages", type=int, default=3)
+    parser.add_argument("--input-patchify-size", type=int, default=1)
     parser.add_argument(
         "--encoder-arch",
         choices=("resnet_unet", "legacy_conv", "paper_resnet34_unet"),
@@ -328,16 +331,7 @@ def _apply_config_overrides(args: argparse.Namespace) -> argparse.Namespace:
 
 
 def _load_simple_kv_config(path: Path) -> dict[str, str]:
-    entries: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            raise ValueError(f"Invalid config line: {raw_line}")
-        key, value = line.split(":", 1)
-        entries[key.strip()] = value.strip()
-    return entries
+    return load_kv_config(path)
 
 
 def _coerce_like(raw_value: str, template: object) -> object:
@@ -446,6 +440,7 @@ def _export_encoder(
             "in_channels": int(config.in_channels),
             "base_channels": int(config.base_channels),
             "stages": int(config.stages),
+            "input_patchify_size": int(model.config.input_patchify_size),
             "encoder_arch": str(config.encoder_arch),
             "blocks_per_stage": int(config.blocks_per_stage),
             "norm_groups": int(config.norm_groups),
