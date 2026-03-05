@@ -7,7 +7,7 @@ Scope: script/config compatibility paths retained during cleanup.
 
 - `active`: default, documented, and supported path.
 - `maintenance-only`: retained for compatibility; no new features.
-- `deprecated`: compatibility path scheduled for removal; runtime warning includes migration target.
+- `deprecated`: compatibility path scheduled for removal; include explicit migration target while active.
 
 ## Script lifecycle matrix
 
@@ -57,13 +57,9 @@ Scope: script/config compatibility paths retained during cleanup.
 - `scripts/run_queue_hotpath_benchmark.py`
 - `scripts/summarize_recovery_matrix_2x2.py`
 
-### Deprecated (warning emitted at runtime)
+### Deprecated
 
-| Entrypoint | Migration target | Deprecated in | Remove no earlier than |
-|---|---|---|---|
-| `scripts/check_feature_normalization_ab.py` | `scripts/experimental/checks/feature_normalization_ab.py` | `v0.1.2` | `v0.3.0` |
-| `scripts/check_feature_x2_toggle_effect.py` | `scripts/experimental/checks/feature_x2_toggle_effect.py` | `v0.1.2` | `v0.3.0` |
-| `scripts/run_pixel_mae_export_pipeline.py` | `scripts/experimental/pipelines/pixel_mae_export.py` | `v0.1.2` | `v0.3.0` |
+- none (as of 2026-03-05)
 
 ## Config lifecycle matrix
 
@@ -100,12 +96,12 @@ Scope: script/config compatibility paths retained during cleanup.
 
 ### Deprecated
 
-- none (as of 2026-03-04)
+- none (as of 2026-03-05)
 
 ## Removal policy
 
 1. Mark path as deprecated in this matrix.
-2. Add runtime warning with explicit migration target for script entrypoints.
+2. Add explicit migration target for deprecated script entrypoints.
 3. Keep deprecated path for at least one tagged release cycle.
 4. At next eligible tagged release, either:
    - remove the path, or
