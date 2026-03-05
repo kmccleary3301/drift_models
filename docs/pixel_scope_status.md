@@ -7,18 +7,24 @@ Current pixel-path status for claim governance.
 - Pixel paper-faithful claims are **deferred** pending closure of explicit implementation/evidence gates.
 
 ## Deferred closure gates
-- Implement remaining paper-specific pixel feature encoder semantics.
-- Add parity tests for pixel-specific faithful contracts.
-- Run pixel ablation-scale package with claim-comparable eval protocol.
-- Run pixel paper-facing (or closest-feasible clearly labeled) package with artifact bundle.
+- Produce paper-scale (not ablation-scale) pixel claim package under pretrained-cached eval contract.
+- Promote pixel artifacts from closest-feasible to paper-faithful only after claim-grade evidence and gate audit.
 
 ## Recently closed sub-gaps
 - Pixel trainer now exposes scheduler controls required for paper-facing sweeps (`scheduler`, `warmup-steps`).
 - Pixel checkpoints now persist scheduler state; smoke/integration coverage added for scheduler path.
 - Pixel trainer now supports a ConvNeXt-family feature extractor path (`feature-encoder=convnext_tiny`) for multi-scale feature taps.
-- Pixel feature-encoder ablation runner is available for quick evidence packaging (`scripts/run_pixel_feature_encoder_ablations.py`).
+- Pixel trainer now also supports a ConvNeXt-V2 family feature extractor path (`feature-encoder=convnextv2_tiny`) for paper-closer encoder ablations.
+- Pixel trainer now supports a dual paper-closer feature path (`feature-encoder=mae_convnextv2`) combining ResNet-style MAE taps with ConvNeXt-V2 taps.
+- Pixel MAE now supports paper-specific pixel patchify semantics (`input 256x256x3 -> patchify 8x8 -> 32x32x192`) with decode-time unpatchify and regression tests.
+- Pixel Table-8 faithful templates are now pinned:
+  - `configs/experimental/pixel/imagenet256_table8_b16_template.yaml`
+  - `configs/experimental/pixel/imagenet256_table8_l16_template.yaml`
+  - compatibility wrappers remain at `configs/pixel/imagenet256_table8_*_template.yaml`.
+  - guarded by `tests/unit/test_table8_pixel_faithful_config_contract.py`.
+- Pixel feature-encoder ablation runner is available for quick evidence packaging (`scripts/experimental/ablations/pixel_feature_encoder.py`; compatibility wrapper: `scripts/run_pixel_feature_encoder_ablations.py`).
 - Pixel pretrained-cached small-sample ablation package has been executed for feature-encoder variants (`outputs/feature_ablations/pixel_pretrained_cached_ablation_20260220_v2`).
-- Pixel paper-facing package orchestrator is available (`scripts/run_pixel_paper_facing_package.py`) with smoke artifact at `outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220`.
+- Pixel paper-facing package orchestrator is available (`scripts/experimental/pipelines/pixel_paper_facing_package.py`; compatibility wrapper: `scripts/run_pixel_paper_facing_package.py`) with smoke artifact at `outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220`.
 - Pixel paper-facing package orchestrator has been validated in both profiles:
   - proxy smoke: `outputs/feature_ablations/pixel_paper_facing_package_smoke_20260220`
   - pretrained-cached smoke: `outputs/feature_ablations/pixel_paper_facing_package_pretrained_smoke_20260220`
@@ -49,9 +55,10 @@ Current pixel-path status for claim governance.
 - Pixel orchestration scripts now have explicit regression coverage:
   - `tests/unit/test_pixel_orchestration_scripts.py` validates package wiring/helpers for
     `run_pixel_paper_facing_package.py`, `run_pixel_proxy_ablation_package.py`, and
-    `run_pixel_feature_encoder_ablations.py`.
+    `run_pixel_feature_encoder_ablations.py` (canonical ablation paths under `scripts/experimental/ablations/`).
   - coverage now also pins eval-profile command contracts for paper-facing packaging
     (`proxy` vs `pretrained_cached` reference/eval flags).
+  - variant-list coverage now pins both ConvNeXt variants (`convnext_tiny`, `convnextv2_tiny`) in ablation package wiring.
 
 ## Claim policy
 - Do not promote pixel artifacts to paper-faithful claim set until all deferred gates are closed.

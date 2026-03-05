@@ -10,17 +10,17 @@ Setup and first-run instructions for the Drifting Models repository.
 # 1. Sync dependencies
 uv sync --extra dev --extra eval
 
-# 2. Verify your environment
-uv run python scripts/runtime_preflight.py --device cpu --check-torchvision --strict
+# 2. One-command onboarding smoke (recommended)
+uv run python scripts/runtime_newcomer_smoke.py --device cpu
 
-# 3. Run your first toy training
+# 3. Run your first toy training directly (optional)
 uv run python scripts/train_toy.py --config configs/toy/quick.yaml --output-dir outputs/toy_quick --device cpu
 
 # 4. Run integration smoke tests
 uv run pytest -q tests/integration/test_stage2_smoke.py
 ```
 
-Expected time: ~2 minutes on CPU. Output: training loss decreasing, final model saved to `outputs/toy_quick/`.
+Expected time: ~5 minutes on CPU. Output: onboarding summary under `outputs/onboarding/newcomer_smoke/` plus stable latent smoke artifacts.
 
 ---
 
@@ -29,9 +29,9 @@ Expected time: ~2 minutes on CPU. Output: training loss decreasing, final model 
 | Step | Action | Time | Details |
 |------|----------|---------|------------|
 | 1 | Environment bootstrap | 30s | [Environment Bootstrap](#environment-bootstrap) |
-| 2 | Runtime preflight | 15s | [Runtime Preflight](#runtime-preflight) |
-| 3 | Toy training run | 2min | [Toy Run (CPU)](#toy-run-cpu) |
-| 4 | Smoke tests | 30s | [Smoke Tests](#smoke-tests) |
+| 2 | Newcomer smoke (one command) | 5min | [Known-Good Path](#known-good-path) |
+| 3 | Runtime preflight | 15s | [Runtime Preflight](#runtime-preflight) |
+| 4 | Toy training run | 2min | [Toy Run (CPU)](#toy-run-cpu) |
 | 5 | Full training | Varies | [Commands](commands.md) |
 
 ---
@@ -154,13 +154,21 @@ uv run python scripts/eval_fid_is.py \
 
 ## Generating Samples
 
-After training, generate images from your checkpoint:
+After running a latent smoke train, generate images from that checkpoint:
 
 ```bash
-uv run python scripts/sample.py \
-  --checkpoint outputs/toy_quick/final_model.pt \
-  --output-dir samples/ \
-  --num-samples 16
+uv run python scripts/train_latent.py \
+  --config configs/latent/smoke_feature_queue.yaml \
+  --output-dir outputs/latent_smoke
+
+uv run python scripts/sample_latent.py \
+  --checkpoint-path outputs/latent_smoke/checkpoint.pt \
+  --output-root outputs/latent_smoke_samples \
+  --n-samples 512 \
+  --batch-size 32 \
+  --decode-mode sd_vae \
+  --decode-image-size 256 \
+  --write-imagefolder
 ```
 
 ---

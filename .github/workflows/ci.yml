@@ -23,6 +23,10 @@ jobs:
           pip install -e ".[dev,eval]"
       - name: Ruff syntax/fatal checks
         run: ruff check drifting_models scripts tests --select E9,F63,F7,F82
+      - name: Validate config tiers
+        run: python scripts/check_config_tiers.py --configs-root configs
+      - name: Validate script surface registry
+        run: python scripts/check_script_surface_registry.py
 
   runtime-preflight:
     runs-on: ${{ matrix.os }}
@@ -172,6 +176,23 @@ jobs:
             tests/integration/test_pixel_smoke.py \
             tests/integration/test_eval_fid_is_smoke.py \
             tests/integration/test_train_latent_config.py
+      - name: Audit Table-8 config contracts
+        run: |
+          python scripts/audit_faithful_config_toggles.py \
+            --config configs/experimental/latent/imagenet1k_sdvae_latents_table8_ablation_default_template.yaml \
+            --config configs/experimental/latent/imagenet1k_sdvae_latents_table8_b2_template.yaml \
+            --config configs/experimental/latent/imagenet1k_sdvae_latents_table8_l2_template.yaml \
+            --config configs/latent/imagenet1k_sdvae_latents_table8_b2_closest_feasible_single_gpu.yaml \
+            --output-json outputs/ops/faithful_toggle_audit_ci/faithful_toggle_audit.json \
+            --output-md outputs/ops/faithful_toggle_audit_ci/faithful_toggle_audit.md
+      - name: Upload config audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: faithful-toggle-audit-py${{ matrix.python-version }}
+          path: outputs/ops/faithful_toggle_audit_ci/*
+          if-no-files-found: ignore
+          retention-days: 14
 
   build:
     runs-on: ubuntu-latest

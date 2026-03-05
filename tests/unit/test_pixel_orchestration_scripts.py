@@ -91,13 +91,21 @@ def test_proxy_ablation_variants_pin_expected_encoder_args() -> None:
     variants = module._build_variants()
     variant_by_name = {str(item["name"]): item for item in variants}
 
-    assert set(variant_by_name) == {"tiny", "mae", "convnext_tiny"}
+    assert set(variant_by_name) == {"tiny", "mae", "convnext_tiny", "convnextv2_tiny", "mae_convnextv2"}
     mae_args = list(map(str, variant_by_name["mae"]["extra_train_args"]))
     convnext_args = list(map(str, variant_by_name["convnext_tiny"]["extra_train_args"]))
+    convnextv2_args = list(map(str, variant_by_name["convnextv2_tiny"]["extra_train_args"]))
+    combined_args = list(map(str, variant_by_name["mae_convnextv2"]["extra_train_args"]))
     assert "--mae-encoder-arch" in mae_args
     assert "paper_resnet34_unet" in mae_args
     assert "--convnext-weights" in convnext_args
     assert "none" in convnext_args
+    assert "--convnextv2-weights" in convnextv2_args
+    assert "none" in convnextv2_args
+    assert "--feature-encoder" in combined_args
+    assert "mae_convnextv2" in combined_args
+    assert "--mae-input-patchify-size" in combined_args
+    assert "8" in combined_args
 
 
 def test_feature_encoder_ablation_variants_include_convnext_and_paper_mae() -> None:
@@ -105,13 +113,21 @@ def test_feature_encoder_ablation_variants_include_convnext_and_paper_mae() -> N
     variants = module._build_variants()
     variant_by_name = {str(item["name"]): item for item in variants}
 
-    assert set(variant_by_name) == {"tiny", "mae", "convnext_tiny"}
+    assert set(variant_by_name) == {"tiny", "mae", "convnext_tiny", "convnextv2_tiny", "mae_convnextv2"}
     mae_args = list(map(str, variant_by_name["mae"]["extra_args"]))
     convnext_args = list(map(str, variant_by_name["convnext_tiny"]["extra_args"]))
+    convnextv2_args = list(map(str, variant_by_name["convnextv2_tiny"]["extra_args"]))
+    combined_args = list(map(str, variant_by_name["mae_convnextv2"]["extra_args"]))
     assert "--mae-encoder-arch" in mae_args
     assert "paper_resnet34_unet" in mae_args
     assert "--convnext-weights" in convnext_args
     assert "none" in convnext_args
+    assert "--convnextv2-weights" in convnextv2_args
+    assert "none" in convnextv2_args
+    assert "--feature-encoder" in combined_args
+    assert "mae_convnextv2" in combined_args
+    assert "--mae-input-patchify-size" in combined_args
+    assert "8" in combined_args
 
 
 def test_paper_facing_eval_proxy_contract_args(tmp_path: Path, monkeypatch) -> None:

@@ -4,6 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
+from drifting_models.utils import load_simple_kv_config
+
 
 REQUIRED_FIELDS: dict[str, str] = {
     "use-feature-loss": "true",
@@ -34,18 +36,19 @@ _TABLE8_TEMPLATE_OVERRIDES: dict[str, dict[str, str]] = {
     },
 }
 
+_CLOSEST_FEASIBLE_MICROVARIANT_OVERRIDES: dict[str, dict[str, str]] = {
+    "imagenet1k_sdvae_latents_table8_b2_closest_feasible_single_gpu.yaml": {
+        "alpha-embedding-type": "mlp",
+        "qk-norm-mode": "l2",
+        "rope-mode": "2d_axial",
+        "disable-patch-positional-embedding": "true",
+        "disable-rmsnorm-affine": "true",
+    }
+}
+
 
 def _load_simple_kv(path: Path) -> dict[str, str]:
-    entries: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        entries[key.strip()] = value.strip()
-    return entries
+    return load_simple_kv_config(path)
 
 
 def main() -> None:
@@ -60,23 +63,31 @@ def main() -> None:
         path = Path(raw)
         cfg = _load_simple_kv(path)
         mismatches: dict[str, dict[str, str | None]] = {}
-        for key, expected in REQUIRED_FIELDS.items():
-            actual = cfg.get(key)
-            if actual != expected:
-                mismatches[key] = {"expected": expected, "actual": actual}
-        overrides = _TABLE8_TEMPLATE_OVERRIDES.get(path.name, {})
-        for key, expected in overrides.items():
-            if key == "mae-encoder-path-contains":
-                actual_path = cfg.get("mae-encoder-path")
-                if actual_path is None or expected not in actual_path:
-                    mismatches[key] = {"expected": expected, "actual": actual_path}
-                continue
+        is_faithful_template = path.name in _TABLE8_TEMPLATE_OVERRIDES
+        if is_faithful_template:
+            for key, expected in REQUIRED_FIELDS.items():
+                actual = cfg.get(key)
+                if actual != expected:
+                    mismatches[key] = {"expected": expected, "actual": actual}
+            overrides = _TABLE8_TEMPLATE_OVERRIDES.get(path.name, {})
+            for key, expected in overrides.items():
+                if key == "mae-encoder-path-contains":
+                    actual_path = cfg.get("mae-encoder-path")
+                    if actual_path is None or expected not in actual_path:
+                        mismatches[key] = {"expected": expected, "actual": actual_path}
+                    continue
+                actual = cfg.get(key)
+                if actual != expected:
+                    mismatches[key] = {"expected": expected, "actual": actual}
+        closest_overrides = _CLOSEST_FEASIBLE_MICROVARIANT_OVERRIDES.get(path.name, {})
+        for key, expected in closest_overrides.items():
             actual = cfg.get(key)
             if actual != expected:
                 mismatches[key] = {"expected": expected, "actual": actual}
         rows.append(
             {
                 "config": str(path),
+                "contract_profile": "faithful_template" if is_faithful_template else "custom",
                 "pass": len(mismatches) == 0,
                 "mismatches": mismatches,
             }

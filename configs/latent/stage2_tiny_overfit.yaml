@@ -1,3 +1,4 @@
+tier: experimental
 # Stage-2 tiny-set overfit sanity profile.
 seed: 1337
 device: cuda:1

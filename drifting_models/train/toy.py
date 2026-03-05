@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 from drifting_models.drift_field import DriftFieldConfig
 from drifting_models.drift_loss import DriftingLossConfig, drifting_stopgrad_loss
 from drifting_models.utils.runtime import resolve_device, seed_everything
+from drifting_models.utils.simple_kv import load_simple_kv_config
 
 
 @dataclass(frozen=True)
@@ -239,15 +240,7 @@ def sample_target_distribution(config: ToyTrainConfig, count: int, *, device: to
 
 
 def parse_simple_yaml_config(path: Path) -> ToyTrainConfig:
-    entries: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            raise ValueError(f"Invalid config line: {raw_line}")
-        key, value = line.split(":", 1)
-        entries[key.strip()] = value.strip()
+    entries = load_simple_kv_config(path)
     return ToyTrainConfig(
         seed=int(entries.get("seed", ToyTrainConfig.seed)),
         latent_dim=int(entries.get("latent_dim", ToyTrainConfig.latent_dim)),

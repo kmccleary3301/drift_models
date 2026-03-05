@@ -1,3 +1,4 @@
+tier: experimental
 # D2 rung4 mini-long protocol (synthetic queue + feature loss, corrected semantics)
 seed: 1337
 device: cuda

@@ -1,3 +1,4 @@
+tier: experimental
 # Stage-6 latent MAE pretrain smoke config
 seed: 1337
 device: cpu

@@ -1,3 +1,4 @@
+tier: experimental
 # Stage-5 SD-VAE latent protocol (CIFAR-10 upscaled) MAE-feature smoke run
 seed: 0
 device: cuda

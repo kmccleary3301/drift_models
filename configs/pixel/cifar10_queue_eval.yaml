@@ -1,3 +1,4 @@
+tier: experimental
 # CIFAR-10 pixel-space queue+feature quick eval/tracking config
 seed: 1337
 device: cpu

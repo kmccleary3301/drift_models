@@ -14,6 +14,14 @@
 - [ ] Claim-boundary docs audited (`docs/faithfulness_status.md`)
 - [ ] Version updated in `pyproject.toml`
 - [ ] Branch protection checks are configured per `docs/branch_protection.md`
+- [ ] Deprecation matrix review completed:
+  - [ ] `docs/deprecation_matrix.md` entries were audited
+  - [ ] Any entry with `Remove no earlier than <= vX.Y.Z` was removed or explicitly deferred with rationale
+- [ ] Table-8 config contract audit passes in CI:
+  - [ ] CI artifact `faithful-toggle-audit-py*` is present
+  - [ ] `faithful_toggle_audit.md` reports all configured rows as pass with no mismatches
+- [ ] Script surface registry audit passes:
+  - [ ] `python scripts/check_script_surface_registry.py`
 - [ ] Packaging build passes:
   - [ ] `python -m build`
   - [ ] `twine check dist/*`
@@ -40,6 +48,7 @@
 ## Post-release
 
 - [ ] Update docs if publish behavior diverged from plan
+- [ ] Update deprecation targets if no removals occurred this cycle
 - [ ] Publish launch posts (Reddit + X)
 - [ ] Start KPI tracking cadence (`docs_tmp/socials/PUBLICITY_KPI_DASHBOARD_V1.md`)
 

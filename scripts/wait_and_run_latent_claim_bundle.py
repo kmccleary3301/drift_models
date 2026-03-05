@@ -10,7 +10,14 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from drifting_models.utils import add_device_argument, codebase_fingerprint, environment_fingerprint, environment_snapshot, write_json
+from drifting_models.utils import (
+    add_device_argument,
+    codebase_fingerprint,
+    environment_fingerprint,
+    environment_snapshot,
+    load_simple_kv_config,
+    write_json,
+)
 from drifting_models.utils.run_md import write_run_md
 
 
@@ -321,11 +328,11 @@ def main() -> None:
 
 
 def _read_steps_from_config(*, config_path: Path) -> int:
-    text = config_path.read_text(encoding="utf-8")
-    match = re.search(r"(?m)^\s*steps\s*:\s*(\d+)\s*$", text)
-    if match is None:
+    entries = load_simple_kv_config(config_path)
+    raw_steps = entries.get("steps")
+    if raw_steps is None:
         raise ValueError(f"Could not parse steps from config: {config_path}")
-    return int(match.group(1))
+    return int(raw_steps)
 
 
 def _find_latest_step_checkpoint(*, checkpoint_dir: Path) -> tuple[int | None, Path | None]:

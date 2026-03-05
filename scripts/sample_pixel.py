@@ -15,6 +15,7 @@ from drifting_models.utils import (
     environment_fingerprint,
     environment_snapshot,
     file_sha256,
+    load_simple_kv_config as load_kv_config,
     resolve_device,
     seed_everything,
     write_json,
@@ -212,6 +213,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--norm-type", type=str, default="layernorm")
     parser.add_argument("--use-qk-norm", action="store_true")
     parser.add_argument("--use-rope", action="store_true")
+    parser.add_argument("--alpha-embedding-type", choices=("mlp", "fourier_mlp"), default="mlp")
+    parser.add_argument("--qk-norm-mode", choices=("auto", "none", "l2"), default="auto")
+    parser.add_argument("--rope-mode", choices=("auto", "none", "1d_flat", "2d_axial"), default="auto")
+    parser.add_argument("--disable-patch-positional-embedding", action="store_true")
+    parser.add_argument("--disable-rmsnorm-affine", action="store_true")
     return parser.parse_args()
 
 
@@ -231,6 +237,11 @@ def _build_model_config(args: argparse.Namespace) -> DiTLikeConfig:
             norm_type=args.norm_type,
             use_qk_norm=args.use_qk_norm,
             use_rope=args.use_rope,
+            alpha_embedding_type=args.alpha_embedding_type,
+            qk_norm_mode=args.qk_norm_mode,
+            rope_mode=args.rope_mode,
+            use_patch_positional_embedding=not args.disable_patch_positional_embedding,
+            rmsnorm_affine=not args.disable_rmsnorm_affine,
         )
     overrides = _load_simple_kv_config(Path(args.config))
     for key, raw_value in overrides.items():
@@ -253,6 +264,11 @@ def _build_model_config(args: argparse.Namespace) -> DiTLikeConfig:
         norm_type=args.norm_type,
         use_qk_norm=args.use_qk_norm,
         use_rope=args.use_rope,
+        alpha_embedding_type=args.alpha_embedding_type,
+        qk_norm_mode=args.qk_norm_mode,
+        rope_mode=args.rope_mode,
+        use_patch_positional_embedding=not args.disable_patch_positional_embedding,
+        rmsnorm_affine=not args.disable_rmsnorm_affine,
     )
 
 
@@ -397,16 +413,7 @@ def _existing_max_index(images_root: Path) -> int:
 
 
 def _load_simple_kv_config(path: Path) -> dict[str, str]:
-    entries: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            raise ValueError(f"Invalid config line: {raw_line}")
-        key, value = line.split(":", 1)
-        entries[key.strip()] = value.strip()
-    return entries
+    return load_kv_config(path)
 
 
 def _coerce_like(raw_value: str, template: object) -> object:

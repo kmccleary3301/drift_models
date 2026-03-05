@@ -10,13 +10,13 @@ This file tracks closure status for remaining open/ambiguous decisions that affe
 
 | Decision topic | Source | Status | Scope impact |
 | --- | --- | --- | --- |
-| Pixel-space generator dimensional specifics vs paper tables | `docs/IMPLEMENTATION_PLAN.md` Open Decision #1 | deferred-with-impact | Pixel paper-faithful claims remain gated; pixel path stays experimental/closest-feasible. |
+| Pixel-space generator dimensional specifics vs paper tables | `docs/IMPLEMENTATION_PLAN.md` Open Decision #1 | closed | Pixel Table-8 templates now pin generator I/O as `256x256x3` with DiT/16 settings, explicitly resolving Table-8 input-size ambiguity in favor of main-text/appendix pixel-space definition. |
 | MAE encoder architecture inconsistency across paper sections | `docs/IMPLEMENTATION_PLAN.md` Open Decision #2 | closed | `paper_resnet34_unet` path implemented and contract-pinned for faithful templates. |
 | Interpretation of vanilla drifting term usage in high-D feature runs | `docs/IMPLEMENTATION_PLAN.md` Open Decision #3 | closed | Faithful Table-8 latent templates now pin `feature-include-raw-drift-loss: true` with `feature-raw-drift-loss-weight: 1.0`; non-faithful tiers may still ablate explicitly. |
 | Table-8 latent MAE width specification by column | P4 faithfulness remediation | closed | Faithful templates now pin width-parity fields (`feature-base-channels`: `256`/`640`) and matching MAE export-path expectations (`w256`/`w640`) via contract tests. |
 | Feature encoder freeze policy (full freeze vs selective gradients) | `docs/IMPLEMENTATION_PLAN.md` Open Decision #4 | closed | Current training paths use explicit frozen feature encoders for latent/pixel feature losses. |
-| Exact alpha embedding parameterization in generator conditioning | `docs/IMPLEMENTATION_PLAN.md` Open Decision #5 | deferred-with-impact | Absolute parity claims on conditioning micro-details remain gated; alpha sampling/weighting remains explicitly logged. |
-| Exact RoPE/QK-Norm micro-variant details | `docs/IMPLEMENTATION_PLAN.md` Open Decision #6 | deferred-with-impact | Generator details are tracked as inferred parity with residual risk until appendix-level confirmation. |
+| Exact alpha embedding parameterization in generator conditioning | `docs/IMPLEMENTATION_PLAN.md` Open Decision #5 | closed | Generator now supports explicit alpha embedding variants (`mlp`, `fourier_mlp`) via config/CLI and unit coverage; claim-facing runs must log selected variant. |
+| Exact RoPE/QK-Norm micro-variant details | `docs/IMPLEMENTATION_PLAN.md` Open Decision #6 | closed | Generator now supports explicit micro-variant controls (`rope_mode`, `qk_norm_mode`, optional patch abs-pos, RMSNorm affine toggle) with regression coverage; run manifests pin chosen variant. |
 
 ## Policy
 

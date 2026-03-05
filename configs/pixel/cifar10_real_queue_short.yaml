@@ -1,3 +1,4 @@
+tier: experimental
 # CIFAR-10 real-data pixel queue short run (pretrained-Inception eval ready)
 seed: 1337
 device: cuda

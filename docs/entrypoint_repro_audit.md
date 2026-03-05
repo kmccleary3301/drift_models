@@ -22,24 +22,24 @@ The goal of this audit is to ensure *major entrypoints* (anything that produces 
 | `scripts/eval_fid_is.py` | Yes | Writes full bundle to output dir |
 | `scripts/cache_reference_stats.py` | Yes | Writes full bundle to output dir |
 | `scripts/export_sd_vae_latents_tensor_file.py` | Yes | Writes full bundle to output dir |
-| `scripts/eval_alpha_sweep.py` | Yes | Writes full bundle + `RUN.md` to `--output-root` |
-| `scripts/eval_last_k_checkpoints.py` | Yes | Writes full bundle + `RUN.md` to `--output-root` |
-| `scripts/run_end_to_end_latent_eval.py` | Yes | Writes full bundle + `RUN.md` to `--output-root` |
-| `scripts/run_end_to_end_pixel_eval.py` | Yes | Writes full bundle + `RUN.md` to `--output-root` |
-| `scripts/run_imagenet_latent_pipeline.py` | Yes | Writes bundle + `RUN.md` to `outputs/logs/` |
-| `scripts/run_latent_table8_benchmark.py` | Yes | Writes bundle + `RUN.md` to `--output-root` |
-| `scripts/run_queue_hotpath_benchmark.py` | Yes | Writes bundle + `RUN.md` to `--output-root` |
-| `scripts/run_generator_arch_ablations.py` | Yes | Writes bundle + `RUN.md` to `--output-dir` |
+| `scripts/experimental/eval/alpha_sweep.py` | Yes | Canonical path (`scripts/eval_alpha_sweep.py` wrapper remains) |
+| `scripts/experimental/eval/last_k_checkpoints.py` | Yes | Canonical path (`scripts/eval_last_k_checkpoints.py` wrapper remains) |
+| `scripts/experimental/pipelines/end_to_end_latent_eval.py` | Yes | Canonical path (`scripts/run_end_to_end_latent_eval.py` wrapper remains) |
+| `scripts/experimental/pipelines/end_to_end_pixel_eval.py` | Yes | Canonical path (`scripts/run_end_to_end_pixel_eval.py` wrapper remains) |
+| `scripts/experimental/pipelines/imagenet_latent_pipeline.py` | Yes | Canonical path (`scripts/run_imagenet_latent_pipeline.py` wrapper remains) |
+| `scripts/experimental/benchmarks/latent_table8.py` | Yes | Canonical path (`scripts/run_latent_table8_benchmark.py` wrapper remains) |
+| `scripts/experimental/benchmarks/queue_hotpath.py` | Yes | Canonical path (`scripts/run_queue_hotpath_benchmark.py` wrapper remains) |
+| `scripts/experimental/ablations/generator_arch.py` | Yes | Canonical path (`scripts/run_generator_arch_ablations.py` wrapper remains) |
 
 ## Adding bundle support to a new script
 
 Use the following pattern (adapt output dir naming to the script):
 
 ```python
-from drifting_models.utils import codebase_fingerprint, environment_fingerprint, environment_snapshot, write_json
+from drifting_models.utils import codebase_fingerprint, discover_repo_root, environment_fingerprint, environment_snapshot, write_json
 from drifting_models.utils.run_md import write_run_md
 
-repo_root = Path(__file__).resolve().parents[1]
+repo_root = discover_repo_root(Path(__file__))
 write_json(out_dir / "env_snapshot.json", environment_snapshot(paths=[out_dir]))
 write_json(out_dir / "codebase_fingerprint.json", codebase_fingerprint(repo_root=repo_root))
 write_json(out_dir / "env_fingerprint.json", environment_fingerprint())
