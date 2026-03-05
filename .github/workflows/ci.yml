@@ -53,7 +53,7 @@ jobs:
         run: python scripts/runtime_preflight.py --device cpu --check-torchvision --strict --output-path outputs/runtime_preflight_ci/preflight_${{ matrix.os }}_cpu.json
       - name: Upload runtime preflight artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: runtime-preflight-${{ matrix.os }}-py${{ matrix.python-version }}
           path: outputs/runtime_preflight_ci/*.json
@@ -94,7 +94,7 @@ jobs:
           fi
       - name: Upload runtime preflight summary artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: runtime-preflight-summary
           path: |
@@ -187,7 +187,7 @@ jobs:
             --output-md outputs/ops/faithful_toggle_audit_ci/faithful_toggle_audit.md
       - name: Upload config audit artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: faithful-toggle-audit-py${{ matrix.python-version }}
           path: outputs/ops/faithful_toggle_audit_ci/*
@@ -246,7 +246,7 @@ jobs:
             --output-path outputs/runtime_preflight_experimental/preflight_${{ matrix.profile }}.json
       - name: Upload experimental runtime artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: runtime-preflight-experimental-${{ matrix.profile }}
           path: outputs/runtime_preflight_experimental/*.json
